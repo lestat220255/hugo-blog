@@ -1,0 +1,24 @@
+baseURL = 'https://blog.88886688.xyz/'
+languageCode = 'en-us'
+title = "Lester's Blog"
+theme = 'PaperMod'
+[menu]
+[[menu.main]]
+  name = 'Home'
+  pageRef = '/'
+  weight = 10
+[[menu.main]]
+  name = 'Tags/分类'
+  pageRef = '/tags'
+  weight = 20
+[[menu.main]]
+  name = 'About/关于'
+  pageRef = '/about'
+  weight = 30
+[params]
+  ShowPostNavLinks = true
+  showtoc = true
+  ShowReadingTime = true
+  ShowWordCount = true
+  ShowCodeCopyButtons = true
+  ShowBreadCrumbs = true
