@@ -6,7 +6,7 @@ description: 自动重试,自动续期
 tags: ['golang', 'redis']
 ---
 
-![https://i.imgur.com/rdrkt8L.png](https://i.imgur.com/rdrkt8L.png)
+![rdrkt8L.png](https://s2.loli.net/2023/05/14/G8aNPSQrlgfUiW9.png)
 
 ### 引言
 
