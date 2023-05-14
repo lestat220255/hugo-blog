@@ -5,6 +5,10 @@
     {{ partial "breadcrumbs.html" . }}
     <h1 class="post-title">
       {{ .Title }}
+      {{- if (eq .Page.RelPermalink "/about/") }}
+      <hr>
+      <img loading="lazy" src="{{ site.Params.AboutImg }}" alt="{{ .Title }}" {{ with .Title}} title="{{ . }}" {{ end }} />
+      {{- end}}
       {{- if .Draft }}<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>{{- end }}
     </h1>
     {{- if .Description }}

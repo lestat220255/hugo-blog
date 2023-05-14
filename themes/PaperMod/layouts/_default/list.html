@@ -9,6 +9,10 @@
   {{- partial "breadcrumbs.html" . }}
   <h1>
     {{ .Title }}
+    {{- if (eq .Page.RelPermalink "/raspberrypi3b-post/") }}
+    <hr>
+    <img loading="lazy" src="{{ site.Params.RaspberrypiImg }}" alt="{{ .Title }}" {{ with .Title}} title="{{ . }}" {{ end }} />
+    {{- end }}
     {{- if and (or (eq .Kind `term`) (eq .Kind `section`)) (.Param "ShowRssButtonInSectionTermList") }}
     {{- with .OutputFormats.Get "rss" }}
     <a href="{{ .RelPermalink }}" title="RSS" aria-label="RSS">

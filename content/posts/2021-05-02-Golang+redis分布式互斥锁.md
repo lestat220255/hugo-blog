@@ -5,6 +5,9 @@ draft: false
 description: 自动重试,自动续期
 tags: ['golang', 'redis']
 ---
+
+![https://i.imgur.com/rdrkt8L.png](https://i.imgur.com/rdrkt8L.png)
+
 ### 引言
 
 假设我们的某个业务会涉及数据更新，同时在实际场景中有较大并发量。流程:读取->修改->保存，在不考虑基于DB层的并发处理情况下，这种场景可能对部分数据造成不可预期的执行结果，此时可以考虑使用分布式锁来解决该问题

@@ -7,6 +7,8 @@ tags:
   - 记录
 ---
 
+![https://i.imgur.com/bgs4Day.png](https://i.imgur.com/bgs4Day.png)
+
 在ChatGPT开放之初，注册了账号并体验了免费版的ChatGPT，总体感受还是比较震撼。给我留下最深印象的是它可以结合上下文和人类进行真正意义上的聊天。
 
 最近开始尝试在Discord上玩各种基于ChatGPT的机器人，Midjourney Bot,ChatGPT Bot之类的。

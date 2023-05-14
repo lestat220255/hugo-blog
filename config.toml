@@ -29,4 +29,5 @@ theme = 'PaperMod'
   ShowReadingTime = true
   ShowWordCount = true
   ShowCodeCopyButtons = true
-  ShowBreadCrumbs = true
+  RaspberrypiImg = 'https://i.imgur.com/I1ACwsc.jpg'
+  AboutImg = 'https://i.imgur.com/rG3ZbYv.jpg'
