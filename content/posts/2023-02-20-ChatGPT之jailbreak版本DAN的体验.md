@@ -1,7 +1,7 @@
 ---
 title: ChatGPT初体验
 description: ChatGPT之jailbreak版本DAN的体验
-date: 2023-02-20T11:09:00.245Z
+date: 2023-02-20
 draft: false
 tags:
   - 记录

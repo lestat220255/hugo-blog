@@ -1,7 +1,7 @@
 ---
 title: 在大陆地区使用GeminiPro搭建生成式聊天机器人
 description: 3种方案的利弊
-date: 2024-01-24T11:34:00.245Z
+date: 2024-01-24
 draft: false
 tags:
   - 记录
