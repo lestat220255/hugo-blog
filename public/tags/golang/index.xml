@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Golang on Lester&#39;s Blog</title>
+    <link>http://localhost:1313/tags/golang/</link>
+    <description>Recent content in Golang on Lester&#39;s Blog</description>
+    <generator>Hugo -- 0.133.1</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 03 May 2021 14:57:51 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/golang/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Golang&#43;Redis分布式可重入锁</title>
+      <link>http://localhost:1313/posts/2021-05-03-golang&#43;redis%E5%88%86%E5%B8%83%E5%BC%8F%E5%8F%AF%E9%87%8D%E5%85%A5%E9%94%81/</link>
+      <pubDate>Mon, 03 May 2021 14:57:51 +0000</pubDate>
+      <guid>http://localhost:1313/posts/2021-05-03-golang&#43;redis%E5%88%86%E5%B8%83%E5%BC%8F%E5%8F%AF%E9%87%8D%E5%85%A5%E9%94%81/</guid>
+      <description>自动重试,自动续期,可重入</description>
+    </item>
+    <item>
+      <title>Golang&#43;Redis分布式互斥锁</title>
+      <link>http://localhost:1313/posts/2021-05-02-golang&#43;redis%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%92%E6%96%A5%E9%94%81/</link>
+      <pubDate>Sun, 02 May 2021 22:39:11 +0000</pubDate>
+      <guid>http://localhost:1313/posts/2021-05-02-golang&#43;redis%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%92%E6%96%A5%E9%94%81/</guid>
+      <description>自动重试,自动续期</description>
+    </item>
+  </channel>
+</rss>

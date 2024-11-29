@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>php开启opcache前后性能差异 | Lester&#39;s Blog</title>
+<meta name="keywords" content="php">
+<meta name="description" content="php-fpm性能优化">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2019-01-17-php%E5%BC%80%E5%90%AFopcache%E5%89%8D%E5%90%8E%E6%80%A7%E8%83%BD%E5%B7%AE%E5%BC%82/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2019-01-17-php%E5%BC%80%E5%90%AFopcache%E5%89%8D%E5%90%8E%E6%80%A7%E8%83%BD%E5%B7%AE%E5%BC%82/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      php开启opcache前后性能差异
+    </h1>
+    <div class="post-description">
+      php-fpm性能优化
+    </div>
+    <div class="post-meta"><span title='2019-01-17 22:39:11.923 +0000 UTC'>January 17, 2019</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;422 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e7%8e%af%e5%a2%83" aria-label="环境">环境</a></li>
+                <li>
+                    <a href="#%e4%b9%8b%e5%89%8dqps" aria-label="之前QPS">之前QPS</a></li>
+                <li>
+                    <a href="#%e5%b7%b2%e5%81%9a%e8%bf%87%e7%9a%84%e8%b0%83%e8%af%95" aria-label="已做过的调试">已做过的调试</a></li>
+                <li>
+                    <a href="#%e5%85%b6%e4%bb%96%e8%af%b4%e6%98%8e" aria-label="其他说明">其他说明</a></li>
+                <li>
+                    <a href="#%e9%97%ae%e9%a2%98" aria-label="问题">问题</a></li>
+                <li>
+                    <a href="#%e9%97%ae%e9%a2%98%e8%a7%a3%e5%86%b3-%e5%bc%80%e5%90%afopcache" aria-label="问题解决-开启opcache">问题解决-开启opcache</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p><strong>本打算发帖到v2ex上求助,结果自己碰巧解决了,因此在博客上记录一下完整的从发现到解决的过程</strong></p>
+<h3 id="环境">环境<a hidden class="anchor" aria-hidden="true" href="#环境">#</a></h3>
+<p>硬件配置:腾讯云的2核4G服务器<br>
+系统:ubuntu server 16.04 LTS<br>
+lnmp:通过docker-compose做编排的php-fpm7.2(基于alpine)+nginx(官方镜像)+mysql5.7(官方镜像)<br>
+缓存:redis<br>
+框架:laravel5.5<br>
+路由大概</p>
+<h3 id="之前qps">之前QPS<a hidden class="anchor" aria-hidden="true" href="#之前qps">#</a></h3>
+<ul>
+<li>不改变入口文件,请求<code>http://hostname/</code>,<strong>QPS:19-21</strong></li>
+<li>不改变入口文件,请求<code>http://hostname/任意路径</code>,<strong>QPS:18-19</strong></li>
+<li>在入口文件第二行直接<code>die();</code>,请求<code>http://hostname/</code>,<strong>QPS:240-250</strong></li>
+</ul>
+<h3 id="已做过的调试">已做过的调试<a hidden class="anchor" aria-hidden="true" href="#已做过的调试">#</a></h3>
+<ol>
+<li>开启了php-fpm的slowlog记录(并确保其正常工作:docker开启了cap_add: SYS_PTRACE),但通过压测工具并未发现slowlog有任何记录(代码里加<code>sleep(2)</code>会记录到slowlog里)</li>
+<li>已经用过laravel自带的配置缓存,路由缓存以及optimize等命令</li>
+<li>通过<code>htop</code>查看系统负载发现cpu是被<code>php-fpm pool www</code>这个command跑满的,因此可以排除其他原因</li>
+</ol>
+<h3 id="其他说明">其他说明<a hidden class="anchor" aria-hidden="true" href="#其他说明">#</a></h3>
+<ol>
+<li>服务器通过nginx监听80端口对来源请求进行反向代理至php所在容器进行处理,所有容器中只有nginx对外开放了80和443,其他都是容器内部通过<code>container_name</code>进行访问</li>
+</ol>
+<h3 id="问题">问题<a hidden class="anchor" aria-hidden="true" href="#问题">#</a></h3>
+<p>可以从哪些方面着手提高QPS?</p>
+<h3 id="问题解决-开启opcache">问题解决-开启opcache<a hidden class="anchor" aria-hidden="true" href="#问题解决-开启opcache">#</a></h3>
+<p><a href="http://php.net/manual/zh/intro.opcache.php">opcaches是什么</a><br>
+<strong>以下是开启opcache和关闭后QPS的对比</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e">#开启opcache（Dockerfile中使用docker-php-ext-install opcache）</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#php.ini配置文件中开启opcache相关配置</span>
+</span></span><span style="display:flex;"><span>➜  ~ http_load -p <span style="color:#ae81ff">80</span> -s <span style="color:#ae81ff">30</span> url
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">2201</span> fetches, <span style="color:#ae81ff">80</span> max parallel, 1.33667e+07 bytes, in <span style="color:#ae81ff">30</span> seconds
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">6073</span> mean bytes/connection
+</span></span><span style="display:flex;"><span>73.3667 fetches/sec, <span style="color:#ae81ff">445556</span> bytes/sec
+</span></span><span style="display:flex;"><span>msecs/connect: 4.99642 mean, 32.34 max, 2.791 min
+</span></span><span style="display:flex;"><span>msecs/first-response: 1066.44 mean, 2130.71 max, 52.395 min
+</span></span><span style="display:flex;"><span>HTTP response codes:
+</span></span><span style="display:flex;"><span>  code <span style="color:#ae81ff">200</span> -- <span style="color:#ae81ff">2201</span>
+</span></span><span style="display:flex;"><span>➜  ~ http_load -p <span style="color:#ae81ff">80</span> -s <span style="color:#ae81ff">30</span> url
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">2389</span> fetches, <span style="color:#ae81ff">80</span> max parallel, 1.45084e+07 bytes, in <span style="color:#ae81ff">30</span> seconds
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">6073</span> mean bytes/connection
+</span></span><span style="display:flex;"><span>79.6333 fetches/sec, <span style="color:#ae81ff">483613</span> bytes/sec
+</span></span><span style="display:flex;"><span>msecs/connect: 4.92044 mean, 41.46 max, 2.818 min
+</span></span><span style="display:flex;"><span>msecs/first-response: 980.024 mean, 1819.01 max, 42.171 min
+</span></span><span style="display:flex;"><span>HTTP response codes:
+</span></span><span style="display:flex;"><span>  code <span style="color:#ae81ff">200</span> -- <span style="color:#ae81ff">2389</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#关闭opcache(未安装opcache)</span>
+</span></span><span style="display:flex;"><span>➜  ~ http_load -p <span style="color:#ae81ff">80</span> -s <span style="color:#ae81ff">30</span> url
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">555</span> fetches, <span style="color:#ae81ff">80</span> max parallel, 3.37052e+06 bytes, in <span style="color:#ae81ff">30</span> seconds
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">6073</span> mean bytes/connection
+</span></span><span style="display:flex;"><span>18.5 fetches/sec, <span style="color:#ae81ff">112350</span> bytes/sec
+</span></span><span style="display:flex;"><span>msecs/connect: 5.68439 mean, 31.76 max, 2.826 min
+</span></span><span style="display:flex;"><span>msecs/first-response: 4035.69 mean, <span style="color:#ae81ff">5985</span> max, 120.81 min
+</span></span><span style="display:flex;"><span>HTTP response codes:
+</span></span><span style="display:flex;"><span>  code <span style="color:#ae81ff">200</span> -- <span style="color:#ae81ff">555</span>
+</span></span><span style="display:flex;"><span>➜  ~ http_load -p <span style="color:#ae81ff">80</span> -s <span style="color:#ae81ff">30</span> url
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">559</span> fetches, <span style="color:#ae81ff">80</span> max parallel, 3.39481e+06 bytes, in <span style="color:#ae81ff">30</span> seconds
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">6073</span> mean bytes/connection
+</span></span><span style="display:flex;"><span>18.6333 fetches/sec, <span style="color:#ae81ff">113160</span> bytes/sec
+</span></span><span style="display:flex;"><span>msecs/connect: 5.78894 mean, 18.31 max, 2.944 min
+</span></span><span style="display:flex;"><span>msecs/first-response: 3970.26 mean, 5100.76 max, 163.014 min
+</span></span><span style="display:flex;"><span>HTTP response codes:
+</span></span><span style="display:flex;"><span>  code <span style="color:#ae81ff">200</span> -- <span style="color:#ae81ff">559</span>
+</span></span></code></pre></div><p>然后通过缓存配置&amp;&amp;路由缓存&amp;&amp;优化io读写&amp;&amp;优化自动加载,将QPS提升到了90+</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>php artisan config:cache <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span><span style="color:#f92672">&amp;&amp;</span> php artisan route:cache <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span><span style="color:#f92672">&amp;&amp;</span> php artisan optimize <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span><span style="color:#f92672">&amp;&amp;</span> composer dumpautoload
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#提升后效果</span>
+</span></span><span style="display:flex;"><span>➜  ~ http_load -p <span style="color:#ae81ff">70</span> -s <span style="color:#ae81ff">10</span> url
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">971</span> fetches, <span style="color:#ae81ff">70</span> max parallel, 5.89688e+06 bytes, in <span style="color:#ae81ff">10</span> seconds
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">6073</span> mean bytes/connection
+</span></span><span style="display:flex;"><span>97.0999 fetches/sec, <span style="color:#ae81ff">589688</span> bytes/sec
+</span></span><span style="display:flex;"><span>msecs/connect: 17.6552 mean, 1026.85 max, 2.823 min
+</span></span><span style="display:flex;"><span>msecs/first-response: 373.716 mean, 3666.34 max, 17.194 min
+</span></span><span style="display:flex;"><span>HTTP response codes:
+</span></span><span style="display:flex;"><span>  code <span style="color:#ae81ff">200</span> -- <span style="color:#ae81ff">971</span>
+</span></span><span style="display:flex;"><span>➜  ~ http_load -p <span style="color:#ae81ff">70</span> -s <span style="color:#ae81ff">10</span> url
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">950</span> fetches, <span style="color:#ae81ff">70</span> max parallel, 5.76935e+06 bytes, in <span style="color:#ae81ff">10</span> seconds
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">6073</span> mean bytes/connection
+</span></span><span style="display:flex;"><span>94.9998 fetches/sec, <span style="color:#ae81ff">576934</span> bytes/sec
+</span></span><span style="display:flex;"><span>msecs/connect: 12.5956 mean, 1028.48 max, 2.918 min
+</span></span><span style="display:flex;"><span>msecs/first-response: 309.675 mean, 3455.64 max, 18.386 min
+</span></span><span style="display:flex;"><span>HTTP response codes:
+</span></span><span style="display:flex;"><span>  code <span style="color:#ae81ff">200</span> -- <span style="color:#ae81ff">950</span>
+</span></span><span style="display:flex;"><span>➜  ~ http_load -p <span style="color:#ae81ff">70</span> -s <span style="color:#ae81ff">10</span> url
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">987</span> fetches, <span style="color:#ae81ff">70</span> max parallel, 5.99405e+06 bytes, in <span style="color:#ae81ff">10</span> seconds
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">6073</span> mean bytes/connection
+</span></span><span style="display:flex;"><span>98.6999 fetches/sec, <span style="color:#ae81ff">599404</span> bytes/sec
+</span></span><span style="display:flex;"><span>msecs/connect: 12.0857 mean, 1037.57 max, 2.811 min
+</span></span><span style="display:flex;"><span>msecs/first-response: 430.667 mean, 3442.93 max, 18.582 min
+</span></span><span style="display:flex;"><span>HTTP response codes:
+</span></span><span style="display:flex;"><span>  code <span style="color:#ae81ff">200</span> -- <span style="color:#ae81ff">987</span>
+</span></span><span style="display:flex;"><span>➜  ~ http_load -p <span style="color:#ae81ff">70</span> -s <span style="color:#ae81ff">10</span> url
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">1002</span> fetches, <span style="color:#ae81ff">70</span> max parallel, 6.08515e+06 bytes, in <span style="color:#ae81ff">10</span> seconds
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">6073</span> mean bytes/connection
+</span></span><span style="display:flex;"><span>100.2 fetches/sec, <span style="color:#ae81ff">608514</span> bytes/sec
+</span></span><span style="display:flex;"><span>msecs/connect: 12.1192 mean, 1004.43 max, 2.796 min
+</span></span><span style="display:flex;"><span>msecs/first-response: 533.153 mean, 2077.65 max, 20.999 min
+</span></span><span style="display:flex;"><span>HTTP response codes:
+</span></span><span style="display:flex;"><span>  code <span style="color:#ae81ff">200</span> -- <span style="color:#ae81ff">1002</span>
+</span></span></code></pre></div><p>根据通常计算QPS的方式,<strong>峰值QPS=日均PVx0.8/86400x0.2</strong>(每天80%的访问量集中在20%的时间里),由此算出理论上当前服务器能承受的PV,假设QPS为:90,PV=1555200=90x17280,正常情况下PV100W应该是没有问题</p>
+<blockquote>
+<p>最后:目前项目时间紧,抽不出时间来使用swoole进行解析,尝试过<code>laravels</code>这个开源胶水项目,但发现不少坑,遂暂时放弃,后续如果需要将单机性能提升到极致,仍然需要使用swoole代替php-fpm!</p>
+</blockquote>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/php/">Php</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/2019-02-19-mysql%E5%AE%9E%E7%8E%B0%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>mysql实现主从复制</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2018-12-05-%E4%B8%80%E4%B8%AAnon-linux%E5%B9%B3%E5%8F%B0%E4%BD%BF%E7%94%A8docker%E7%9A%84%E9%97%AE%E9%A2%98/">
+    <span class="title">Next »</span>
+    <br>
+    <span>一个non-linux平台使用docker的问题</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

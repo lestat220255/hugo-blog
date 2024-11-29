@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>ngrok&#43;nginx实现内网穿透 | Lester&#39;s Blog</title>
+<meta name="keywords" content="ngrok">
+<meta name="description" content="让外网访问你的本地服务">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2018-03-24-ngrok&#43;nginx%E5%AE%9E%E7%8E%B0%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2018-03-24-ngrok&#43;nginx%E5%AE%9E%E7%8E%B0%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      ngrok&#43;nginx实现内网穿透
+    </h1>
+    <div class="post-description">
+      让外网访问你的本地服务
+    </div>
+    <div class="post-meta"><span title='2018-03-24 22:39:11.923 +0000 UTC'>March 24, 2018</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;358 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#ngrok1x%e4%bb%8b%e7%bb%8d2x%e6%b2%a1%e6%9c%89%e5%bc%80%e6%ba%90%e5%ae%98%e7%bd%91httpsngrokcom" aria-label="ngrok1.x介绍(2.x没有开源官网)">ngrok1.x介绍(2.x没有开源官网)</a></li>
+                <li>
+                    <a href="#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6" aria-label="先决条件">先决条件</a></li>
+                <li>
+                    <a href="#%e9%83%a8%e7%bd%b2" aria-label="部署">部署</a><ul>
+                        
+                <li>
+                    <a href="#%e4%b8%80%e4%b8%aa%e4%be%8b%e5%ad%90" aria-label="一个例子">一个例子</a><ul>
+                        
+                <li>
+                    <a href="#%e6%95%b0%e6%8d%ae%e5%87%86%e5%a4%87" aria-label="数据准备">数据准备</a></li>
+                <li>
+                    <a href="#%e9%a2%84%e6%9c%9f%e7%bb%93%e6%9e%9c" aria-label="预期结果">预期结果</a></li></ul>
+                </li>
+                <li>
+                    <a href="#go%e7%8e%af%e5%a2%83%e7%9a%84%e5%ae%89%e8%a3%85" aria-label="Go环境的安装">Go环境的安装</a></li>
+                <li>
+                    <a href="#%e5%ae%89%e8%a3%85ngrok" aria-label="安装ngrok">安装ngrok</a></li>
+                <li>
+                    <a href="#%e6%9c%8d%e5%8a%a1%e7%ab%af%e8%bf%90%e8%a1%8c" aria-label="服务端运行">服务端运行</a></li>
+                <li>
+                    <a href="#%e5%ae%a2%e6%88%b7%e7%ab%af%e8%bf%90%e8%a1%8c%e4%b8%8e%e4%bd%bf%e7%94%a8" aria-label="客户端运行与使用">客户端运行与使用</a></li>
+                <li>
+                    <a href="#nginx%e5%8f%8d%e5%90%91%e4%bb%a3%e7%90%86%e7%9b%b8%e5%85%b3%e9%85%8d%e7%bd%ae" aria-label="nginx反向代理相关配置">nginx反向代理相关配置</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><blockquote>
+<p>写在前面:<br>
+前天在qq群里看到有人在讨论替代花生壳的工具，说到了ngrok，说是可以实现花生壳一样的内网穿透，个人认为主要有以下几个用处:</p>
+</blockquote>
+<ol>
+<li>可以在公司测试服务器上搭建一个服务,实现测试站点的本地访问(公网访问本地服务器)，在这之前通常是上传网站到服务器并解析一个子域名，相对比较费时</li>
+<li>微信接口开发的时候优势更明显，因为微信的OAuth一类认证需要一个公网域名且端口必须是80/443(也是本文需要用到nginx做反向代理的原因之一)</li>
+<li>欢迎补充&hellip;</li>
+</ol>
+<h2 id="ngrok1x介绍2x没有开源官网httpsngrokcom">ngrok1.x介绍(2.x没有开源<a href="https://ngrok.com/">官网</a>)<a hidden class="anchor" aria-hidden="true" href="#ngrok1x介绍2x没有开源官网httpsngrokcom">#</a></h2>
+<p><img loading="lazy" src="https://lestat.b0.upaiyun.com/blog/ngrok-intro.png">
+<a href="https://github.com/inconshreveable/ngrok">ngrok1.x源码github地址</a><br>
+如上封面图所示</p>
+<p>橘色屏幕的笔记本是你的工作机器，安装了ngrok客户端
+ngrok.com所在的服务器安装了ngrok的服务端（ngrokd）
+利用ngrok 8080命令可以将你本机的8080端口暴露给反向代理至ngrok.com的某个二级域名如：<em>.ngrok.com
+公网用户可以通过</em>.ngrok.com就可以访问你本机8080端口上的站点内容了。
+由此可见，借助ngrok，可以解决web项目(尤其是微信接口相关)开发过程经常遇到的“本地开发，外网调试”问题。</p>
+<h2 id="先决条件">先决条件<a hidden class="anchor" aria-hidden="true" href="#先决条件">#</a></h2>
+<ol>
+<li>有一个域名,并解析到自己服务器上,如:<code>*.ngrok.lestat.me</code></li>
+<li>有一个具备固定ip的公网服务器</li>
+</ol>
+<h2 id="部署">部署<a hidden class="anchor" aria-hidden="true" href="#部署">#</a></h2>
+<blockquote>
+<p>基本步骤:安装go环境-&gt;下载ngrok源码-&gt;使用go编译ngrok以及相关环境变量的设置-&gt;证书配置-&gt;运行ngrok服务器端并指定监听的http/https端口-&gt;nginx配置文件中对上一步中相关端口做反向代理配置-&gt;重启nginx-&gt;生成对应OS(linux,darwin,windows)的客户端-&gt;本地机器下载上一步生成的客户端-&gt;本地新建配置文件ngrok.cfg-&gt;本地运行客户端并指定配置文件-&gt;出现<code>online</code>则说明穿透成功</p>
+</blockquote>
+<h3 id="一个例子">一个例子<a hidden class="anchor" aria-hidden="true" href="#一个例子">#</a></h3>
+<h4 id="数据准备">数据准备<a hidden class="anchor" aria-hidden="true" href="#数据准备">#</a></h4>
+<p>本机地址 IP：127.0.0.1，HTTP 为 80
+外网地址 IP：45.77.14.6，HTTP 为 80(NGINX监听该端口,并对*.ngrok.lestat.me域名进行转发到服务器的60端口)
+域名为：http://*.ngrok.lestat.me</p>
+<h4 id="预期结果">预期结果<a hidden class="anchor" aria-hidden="true" href="#预期结果">#</a></h4>
+<p>外网访问 http://*.ngrok.lestat.me可以访问到本机上80端口提供的网站<br>
+下文按照前面的例子来搭建</p>
+<h3 id="go环境的安装">Go环境的安装<a hidden class="anchor" aria-hidden="true" href="#go环境的安装">#</a></h3>
+<ol>
+<li>下载并解压GOLANG</li>
+</ol>
+<pre tabindex="0"><code>wget -c https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz
+tar -C /usr/local -zxvf go1.8.3.linux-amd64.tar.gz
+</code></pre><ol start="2">
+<li>设置相关环境变量</li>
+</ol>
+<pre tabindex="0"><code>export GOROOT=/usr/local/go
+export PATH=$PATH:$GOROOT/bin
+export GOPATH=$HOME/go
+export GOROOT_BOOTSTRAP=/usr/local/go
+</code></pre><ol start="3">
+<li>检查安装是否成功<br>
+<code>go version</code></li>
+</ol>
+<h3 id="安装ngrok">安装ngrok<a hidden class="anchor" aria-hidden="true" href="#安装ngrok">#</a></h3>
+<ol>
+<li>下载并配置参数</li>
+</ol>
+<pre tabindex="0"><code>cd /usr/local/
+git clone https://github.com/inconshreveable/ngrok.git
+export GOPATH=/usr/local/ngrok/
+export NGROK_DOMAIN=&#34;ngrok.lestat.me&#34;
+cd ngrok
+</code></pre><ol start="2">
+<li>生成证书</li>
+</ol>
+<pre tabindex="0"><code>openssl genrsa -out rootCA.key 2048
+openssl req -x509 -new -nodes -key rootCA.key -subj &#34;/CN=$NGROK_DOMAIN&#34; -days 5000 -out rootCA.pem
+openssl genrsa -out server.key 2048
+openssl req -new -key server.key -subj &#34;/CN=$NGROK_DOMAIN&#34; -out server.csr
+openssl x509 -req -in server.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out server.crt -days 5000
+</code></pre><ol start="3">
+<li>将源码下的证书复制到指定位置</li>
+</ol>
+<pre tabindex="0"><code>cp rootCA.pem assets/client/tls/ngrokroot.crt
+cp server.crt assets/server/tls/snakeoil.crt
+cp server.key assets/server/tls/snakeoil.key
+</code></pre><ol start="4">
+<li>编译服务器&amp;客户端(linux64位),如果是32位系统则是<code>amd386</code></li>
+</ol>
+<pre tabindex="0"><code>cd /usr/local/go/src
+GOOS=linux GOARCH=amd64 ./make.bash
+cd /usr/local/ngrok/
+GOOS=linux GOARCH=amd64 make release-server release-client
+</code></pre><p>编译Mac64位客户端</p>
+<pre tabindex="0"><code>cd /usr/local/go/src
+GOOS=darwin GOARCH=amd64 ./make.bash
+cd /usr/local/ngrok/
+GOOS=darwin GOARCH=amd64 make release-client
+</code></pre><p>编译Windows64位客户端</p>
+<pre tabindex="0"><code>cd /usr/local/go/src
+GOOS=windows GOARCH=amd64 ./make.bash
+cd /usr/local/ngrok/
+GOOS=windows GOARCH=amd64 make release-client
+</code></pre><h3 id="服务端运行">服务端运行<a hidden class="anchor" aria-hidden="true" href="#服务端运行">#</a></h3>
+<ol>
+<li>进入到ngrok的bin目录下</li>
+</ol>
+<pre tabindex="0"><code>cd /usr/local/ngrok/bin
+./ngrokd -domain=&#34;$NGROK_DOMAIN&#34; -httpAddr=&#34;:60&#34; -httpsAddr=&#34;:63&#34;
+</code></pre><ol start="2">
+<li>如果出现如下提示,说明服务端开启成功</li>
+</ol>
+<pre tabindex="0"><code>[06:59:42 UTC 2018/03/24] [INFO] (ngrok/log.(*PrefixLogger).Info:83) [registry] [tun] No affinity cache specified
+[06:59:42 UTC 2018/03/24] [INFO] (ngrok/log.Info:112) Listening for public http connections on [::]:60
+[06:59:42 UTC 2018/03/24] [INFO] (ngrok/log.Info:112) Listening for public https connections on [::]:63
+[06:59:42 UTC 2018/03/24] [INFO] (ngrok/log.Info:112) Listening for control and proxy connections on [::]:4443
+[06:59:42 UTC 2018/03/24] [INFO] (ngrok/log.(*PrefixLogger).Info:83) [metrics] Reporting every 30 seconds
+</code></pre><h3 id="客户端运行与使用">客户端运行与使用<a hidden class="anchor" aria-hidden="true" href="#客户端运行与使用">#</a></h3>
+<p>mac 客户端的位置：</p>
+<pre tabindex="0"><code>/usr/local/ngrok/bin/darwin_amd64/ngrok
+</code></pre><p>windows 客户端的位置：</p>
+<pre tabindex="0"><code>/usr/local/ngrok/bin/windows_amd64/ngrok.exe
+</code></pre><p>linux 客户端的位置：</p>
+<pre tabindex="0"><code>/usr/local/ngrok/bin/ngrok
+</code></pre><p>新建ngrok.cfg文件(配置文件)</p>
+<pre tabindex="0"><code>server_addr: &#34;ngrok.lestat.me:4443&#34;
+trust_host_root_certs: false
+tunnels: #可定义多个域名
+  test1:
+   subdomain: &#34;test1&#34; #定义服务器分配域名前缀
+   proto:
+    http: 80 #映射端口，不加ip默认本机
+  test2:
+   subdomain: &#34;test2&#34; #定义服务器分配域名前缀
+   proto:
+    http: 81 #映射端口，不加ip默认本机
+</code></pre><p>从命令行运行客户端文件,如下:
+方法1:</p>
+<pre tabindex="0"><code>./ngrok -config=ngrok.cfg -log=ngrok.log start test1
+</code></pre><p>方法2:(最后一个8080代表映射的本地主机端口)</p>
+<pre tabindex="0"><code>./ngrok -config=ngrok.cfg -log=ngrok.log -subdomain=test1 8080
+</code></pre><p>如果返回相似于以下的内容,说明客户端启动成功</p>
+<pre tabindex="0"><code>Tunnel Status                 online                         
+Version                       1.7/1.7                        
+Forwarding                    https://hccrm.ngrok.lestat.me:60 -&gt; 127.0.0.1:80  
+Forwarding                    http://hccrm.ngrok.lestat.me:60 -&gt; 127.0.0.1:80   
+Web Interface                 127.0.0.1:4040                 
+# Conn                        0                              
+Avg Conn Time                 0.00ms
+</code></pre><h3 id="nginx反向代理相关配置">nginx反向代理相关配置<a hidden class="anchor" aria-hidden="true" href="#nginx反向代理相关配置">#</a></h3>
+<p>假设:</p>
+<ol>
+<li>ngrok监听http的端口为60</li>
+<li>nginx监听了当前服务器的80端口(域名访问hccrm.ngrok.lestat.me时会直接访问到nginx监听的80端口,因此需要nginx转发)</li>
+</ol>
+<pre tabindex="0"><code>server {
+    listen       80;
+    server_name  *.ngrok.lestat.me;
+
+    location / {
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host  $http_host:60; #此处端口要跟 启动服务端ngrok 时指定的端口一致
+        proxy_set_header X-Nginx-Proxy true;
+        proxy_set_header Connection &#34;&#34;;
+        proxy_pass  http://127.0.0.1:60; # 反向代理对应的本地ip:port
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+</code></pre><p>重启nginx
+<code>service nginx reload</code></p>
+<p>至此,已实现了内网穿透<br>
+目前存在的问题:</p>
+<ol>
+<li>目前不知如何实现对本地虚拟主机的访问(例如本地apache上httpd-vhosts中配置的虚拟主机)</li>
+<li>由于ngrok1.x已于两年前停止维护,再加上第一个问题1,因此后续准备写一篇关于<a href="https://github.com/fatedier/frp">frp</a>的搭建记录,这是一个长期维护的开源项目,值得学习!</li>
+</ol>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/ngrok/">Ngrok</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/2018-03-26-frp&#43;nginx%E5%AE%9E%E7%8E%B0%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>frp&#43;nginx实现内网穿透</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2018-02-14-%E6%B5%85%E8%B0%88shadowsocks%E4%B8%AD%E7%9A%84pac%E9%85%8D%E7%BD%AE/">
+    <span class="title">Next »</span>
+    <br>
+    <span>浅谈shadowsocks中的pac配置</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

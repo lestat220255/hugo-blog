@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>在大陆地区使用GeminiPro搭建生成式聊天机器人 | Lester&#39;s Blog</title>
+<meta name="keywords" content="记录">
+<meta name="description" content="3种方案的利弊">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2024-01-24-%E5%9C%A8%E5%A4%A7%E9%99%86%E5%9C%B0%E5%8C%BA%E4%BD%BF%E7%94%A8geminipro%E6%90%AD%E5%BB%BA%E7%94%9F%E6%88%90%E5%BC%8F%E8%81%8A%E5%A4%A9%E6%9C%BA%E5%99%A8%E4%BA%BA/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2024-01-24-%E5%9C%A8%E5%A4%A7%E9%99%86%E5%9C%B0%E5%8C%BA%E4%BD%BF%E7%94%A8geminipro%E6%90%AD%E5%BB%BA%E7%94%9F%E6%88%90%E5%BC%8F%E8%81%8A%E5%A4%A9%E6%9C%BA%E5%99%A8%E4%BA%BA/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      在大陆地区使用GeminiPro搭建生成式聊天机器人
+    </h1>
+    <div class="post-description">
+      3种方案的利弊
+    </div>
+    <div class="post-meta"><span title='2024-01-24 00:00:00 +0000 UTC'>January 24, 2024</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;141 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e6%96%b9%e6%a1%88%e4%b8%80%e4%bd%bf%e7%94%a8-google-gemini-api--gemini-pro-chat--vercel-%e9%83%a8%e7%bd%b2%e8%81%8a%e5%a4%a9%e6%9c%ba%e5%99%a8%e4%ba%ba" aria-label="方案一：使用 Google Gemini API &#43; Gemini Pro Chat &#43; Vercel 部署聊天机器人">方案一：使用 Google Gemini API + Gemini Pro Chat + Vercel 部署聊天机器人</a></li>
+                <li>
+                    <a href="#%e6%96%b9%e6%a1%88%e4%ba%8c%e5%9c%a8%e8%ae%bf%e9%97%ae%e5%9f%9f%e5%90%8d%e5%89%8d%e5%8a%a0%e4%b8%8a-cloudflare-%e7%9a%84-dns-%e8%a7%a3%e6%9e%90%e5%92%8c-cdn-%e5%88%86%e5%8f%91" aria-label="方案二：在访问域名前加上 Cloudflare 的 DNS 解析和 CDN 分发">方案二：在访问域名前加上 Cloudflare 的 DNS 解析和 CDN 分发</a></li>
+                <li>
+                    <a href="#%e6%96%b9%e6%a1%88%e4%b8%89%e5%b0%86%e6%9c%8d%e5%8a%a1%e9%83%a8%e7%bd%b2%e5%88%b0%e4%b8%aa%e4%ba%ba%e7%be%8e%e5%9b%bd-vps-%e4%b8%8a%e9%9d%a2%e5%86%8d%e9%80%9a%e8%bf%87-vps-%e4%b8%8a%e9%9d%a2%e7%8e%b0%e6%9c%89%e7%9a%84-caddy-%e5%81%9a%e4%ba%86%e5%8f%8d%e5%90%91%e4%bb%a3%e7%90%86" aria-label="方案三：将服务部署到个人美国 VPS 上面，再通过 VPS 上面现有的 Caddy 做了反向代理">方案三：将服务部署到个人美国 VPS 上面，再通过 VPS 上面现有的 Caddy 做了反向代理</a></li>
+                <li>
+                    <a href="#2-%e6%9c%80%e7%bb%88%e6%96%b9%e6%a1%88%e4%b8%ad%e7%94%a8%e6%88%b7%e8%ae%bf%e9%97%ae-geminiprochat-%e7%9a%84%e6%b5%81%e7%a8%8b" aria-label="2. 最终方案中用户访问 GeminiProChat 的流程">2. 最终方案中用户访问 GeminiProChat 的流程</a></li>
+                <li>
+                    <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a></li>
+                <li>
+                    <a href="#%e7%bb%86%e8%8a%82%e8%a1%a5%e5%85%85" aria-label="细节补充">细节补充</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p><img alt="gemini.jpeg" loading="lazy" src="https://raw.githubusercontent.com/lestat220255/images/main/gemini.jpeg"></p>
+<blockquote>
+<p>本文仅作技术方案记录</p>
+</blockquote>
+<p>两周前偶然发现了一个基于GeminiPro接口的<a href="https://github.com/babaohuang/GeminiProChat">开源项目</a>,可以一键搭建聊天机器人,于是准备尝试一下,并顺便找到一种可以直接通过国内网络访问的方式.</p>
+<h3 id="方案一使用-google-gemini-api--gemini-pro-chat--vercel-部署聊天机器人">方案一：使用 Google Gemini API + Gemini Pro Chat + Vercel 部署聊天机器人<a hidden class="anchor" aria-hidden="true" href="#方案一使用-google-gemini-api--gemini-pro-chat--vercel-部署聊天机器人">#</a></h3>
+<p>优点：</p>
+<ul>
+<li>部署简单，易于使用。</li>
+<li>Vercel 提供了开箱即用的解决方案，降低了开发难度。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>由于中国大陆的 GFW，无法通过在大陆直连的方式访问聊天机器人。</li>
+<li>Vercel 的服务器位于海外，可能会导致访问速度较慢。</li>
+</ul>
+<h3 id="方案二在访问域名前加上-cloudflare-的-dns-解析和-cdn-分发"><strong>方案二：在访问域名前加上 Cloudflare 的 DNS 解析和 CDN 分发</strong><a hidden class="anchor" aria-hidden="true" href="#方案二在访问域名前加上-cloudflare-的-dns-解析和-cdn-分发">#</a></h3>
+<p>优点：</p>
+<ul>
+<li>绕过了 GFW，用户可以访问到部署在 Vercel 的页面。</li>
+<li>Cloudflare 提供了全球化的 CDN 服务，可以提高访问速度。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>由于 Google 本身对于访问来源 IP 的限制，当用户访问 API 的时候，仍然会被 API 检测到来源 IP 是来自大陆，因此，这种方案虽然能让用户访问到部署在 Vercel 的页面，但是仍然无法使用 Gemini API。</li>
+</ul>
+<h3 id="方案三将服务部署到个人美国-vps-上面再通过-vps-上面现有的-caddy-做了反向代理"><strong>方案三：将服务部署到个人美国 VPS 上面，再通过 VPS 上面现有的 Caddy 做了反向代理</strong><a hidden class="anchor" aria-hidden="true" href="#方案三将服务部署到个人美国-vps-上面再通过-vps-上面现有的-caddy-做了反向代理">#</a></h3>
+<p>优点：</p>
+<ul>
+<li>隐藏了来源 IP，使 Gemini API 认为用户来自美国，因此实现了在中国大陆正常使用 Gemini API。</li>
+<li>使用 Caddy 做反向代理，配置简单，易于使用。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>需要有美国 VPS，并且需要有一定的技术基础来配置反向代理。</li>
+<li>VPS 的稳定性和安全性需要自行保障。</li>
+</ul>
+<h3 id="2-最终方案中用户访问-geminiprochat-的流程"><strong>2. 最终方案中用户访问 GeminiProChat 的流程</strong><a hidden class="anchor" aria-hidden="true" href="#2-最终方案中用户访问-geminiprochat-的流程">#</a></h3>
+<ol>
+<li>用户通过大陆 IP 直连被 Cloudflare CDN 分发的聊天页面。</li>
+<li>在聊天页面上的对话请求被美国 VPS 上的 Caddy 通过反向代理（不手动传递用户真实 IP）的方式隐藏了来源 IP。</li>
+<li>Gemini API 认为用户来自美国，因此实现了在中国大陆正常使用 Gemini API。</li>
+</ol>
+<p><img alt="方案三流程" loading="lazy" src="https://raw.githubusercontent.com/lestat220255/images/main/SolutionUML.png"></p>
+<h3 id="总结"><strong>总结</strong><a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h3>
+<p>以上是<strong>中国大陆使用 Google Gemini API 搭建生成式聊天机器人</strong>的几种技术实现方案的尝试，我最终选择了一种可行的方法。这种方法虽然需要有美国 VPS，并且需要有一定的技术基础来配置反向代理，但它可以实现<strong>在中国大陆正常使用 Gemini API</strong>。</p>
+<h3 id="细节补充"><strong>细节补充</strong><a hidden class="anchor" aria-hidden="true" href="#细节补充">#</a></h3>
+<ul>
+<li>在方案二中，虽然使用了 Cloudflare 的 DNS 解析和 CDN 分发，但由于 Google 本身对于访问来源 IP 的限制，仍然无法使用 Gemini API。这是因为 Google 会根据用户的 IP 地址来判断其所在的位置，并根据不同地区提供不同的服务。</li>
+<li>在方案三中，使用 Caddy 做反向代理可以隐藏用户的真实 IP 地址。Caddy 是一个轻量级的 Web 服务器，它可以将用户的请求转发到另一个服务器，同时隐藏用户的真实 IP 地址。</li>
+<li>在这种方案中，用户访问聊天页面的速度可能会受到 VPS 的影响。如果 VPS 的性能较差，或者网络连接不稳定，可能会导致访问速度较慢。</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/%E8%AE%B0%E5%BD%95/">记录</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="http://localhost:1313/posts/2023-02-20-chatgpt%E4%B9%8Bjailbreak%E7%89%88%E6%9C%ACdan%E7%9A%84%E4%BD%93%E9%AA%8C/">
+    <span class="title">Next »</span>
+    <br>
+    <span>ChatGPT初体验</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

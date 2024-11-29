@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>使用apache2反向代理访问google | Lester&#39;s Blog</title>
+<meta name="keywords" content="apache">
+<meta name="description" content="实现不用科学上网也可以访问google">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2017-10-14-%E4%BD%BF%E7%94%A8apache2%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86%E8%AE%BF%E9%97%AEgoogle/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2017-10-14-%E4%BD%BF%E7%94%A8apache2%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86%E8%AE%BF%E9%97%AEgoogle/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      使用apache2反向代理访问google
+    </h1>
+    <div class="post-description">
+      实现不用科学上网也可以访问google
+    </div>
+    <div class="post-meta"><span title='2017-10-14 22:39:11.923 +0000 UTC'>October 14, 2017</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;74 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e5%87%86%e5%a4%87%e5%b7%a5%e4%bd%9c" aria-label="准备工作:">准备工作:</a></li>
+                <li>
+                    <a href="#%e7%9b%ae%e5%89%8d%e5%ad%98%e5%9c%a8%e7%9a%84%e9%97%ae%e9%a2%98" aria-label="目前存在的问题:">目前存在的问题:</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><blockquote>
+<p><strong>引言</strong><br>
+刚刚在<a href="https://www.v2ex.com/t/397631#reply17">v2ex</a>上看到一篇用nginx做反向代理访问google的帖子,出于好奇,试了试用apache进行反向代理访问google,果然很好玩!</p>
+</blockquote>
+<h2 id="准备工作">准备工作:<a hidden class="anchor" aria-hidden="true" href="#准备工作">#</a></h2>
+<ul>
+<li>apache服务器需要安装proxy相关模块,如果是ubuntu环境可以直接使用命令<code>sudo a2enmod 模块名称</code>进行安装,模块可以在<code>/etc/apache2/mods-available/</code>目录下查看,安装好的模块可以在<code>/etc/apache2/mods-enabled/</code>
+里查看<br>
+这里直接上配置:</li>
+</ul>
+<pre tabindex="0"><code>&lt;VirtualHost *:443&gt;
+    ServerName facebook.smarthippo.club
+    SSLEngine on
+    SSLCertificateFile &#34;/etc/letsencrypt/archive/facebook.smarthippo.club/cert1.pem&#34;
+    SSLCertificateKeyFile &#34;/etc/letsencrypt/archive/facebook.smarthippo.club/privkey1.pem&#34;
+	SetEnvIf User-Agent “.*MSIE.*” \
+	nokeepalive ssl-unclean-shutdown \
+	downgrade-1.0 force-response-1.0
+	SSLProxyEngine On
+	ProxyPass / https://www.facebook.com/
+	ProxyPassReverse / https://www.facebook.com/
+&lt;/VirtualHost&gt;
+&lt;VirtualHost *:443&gt;
+    ServerName google.smarthippo.club
+    SSLEngine on
+    SSLCertificateFile &#34;/etc/letsencrypt/archive/google.smarthippo.club/cert1.pem&#34;
+    SSLCertificateKeyFile &#34;/etc/letsencrypt/archive/google.smarthippo.club/privkey1.pem&#34;
+	SetEnvIf User-Agent “.*MSIE.*” \
+	nokeepalive ssl-unclean-shutdown \
+	downgrade-1.0 force-response-1.0
+	SSLProxyEngine On
+	ProxyPass / https://www.google.com.hk/
+	ProxyPassReverse / https://www.google.com.hk/
+&lt;/VirtualHost&gt;
+</code></pre><p>So,<a href="https://google.smarthippo.club">Google</a>,<a href="https://wiki.smarthippo.club">Wiki</a>,就是这么简单~</p>
+<blockquote>
+<p>备注:<br>
+这篇文章的前提当然是有一个国外的服务器,安利一波<a href="https://www.vultr.com/">vultr(价格合理,且稳定,按天计费)</a>
+可以通过添加子域名的方式实现对不同墙外站点的访问,详见第二个配置
+安装ssl证书<a href="https://www.zhukun.net/archives/8104">网上</a>太多,就不写了</p>
+</blockquote>
+<h2 id="目前存在的问题">目前存在的问题:<a hidden class="anchor" aria-hidden="true" href="#目前存在的问题">#</a></h2>
+<ol>
+<li>在反向代理站点中如果有跳转到其他被墙站点的链接,依然无法访问</li>
+<li>部分网站对机器访问的请求有限制,比如google,虽然首页可以正常访问,但其他页面可能会访问不了,跳转到<code>ipv4.google.com</code>进行人机验证</li>
+</ol>
+<p>最后还是没能第二个问题&hellip;<br>
+还是用科学上网吧&hellip;</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/apache/">Apache</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/2017-10-14-%E4%B8%80%E4%BA%9B%E5%B8%B8%E7%94%A8%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>一些常用正则表达式</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2017-10-08-national-day-holiday-travels/">
+    <span class="title">Next »</span>
+    <br>
+    <span>成都-泸沽湖-洱海自驾游</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

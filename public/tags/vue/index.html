@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Vue | Lester&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/tags/vue/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/tags/vue/index.xml">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/tags/vue/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="list" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main"> 
+<header class="page-header">
+  <h1>
+    Vue
+  </h1>
+</header>
+
+<article class="post-entry tag-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">webview调用小程序支付流程
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>最近在做一个叫资源树的小型商城项目,其中有一个场景需要在小程序中嵌入的web-view内向小程序发起支付请求完成支付,折腾了一天,在网上各种经验的帮助下总算搞定了,现在记录一下流程
+环境&amp;技术栈 采用前后端分离的开发模式
+接口请求协议:https&#43;http(https为了兼顾小程序) 后端:lnmp
+前端:vue-cli&#43;element-ui开发的spa(路由模式为history)
+小程序:pages/index/index.js(默认入口文件,用于获取openid并跳转),webview页面(嵌套了spa),wxpay页面(发起小程序支付),webvieworders页面(支付成功后跳转)
+步骤 index.js在onload里使用wx.login获取到code参数,并携带该参数向后台服务器请求openid 携带后台返回的openid通过小程序路由跳转至webview页面，webview页面的js在onload里通过options参数获取到携带的openid后通过webview发送至spa应用中 spa入口接收到openid后保存至cookie 在支付页面获取该openid并向后台(调用微信统一下单接口并返回后续wxpayment方法所需参数的地址)发起请求，拿到服务器返回的jsParameters后携带该参数通过小程序提供的wx.miniProgram.navigateTo方法跳转回小程序支付页面(逻辑自己写)，支付页面接收到该参数后解析成js对象并在请求小程序支付方法中携带该参数 处理支付成功或失败逻辑即可 已完成初步测试以及小程序上线</p>
+  </div>
+  <footer class="entry-footer"><span title='2018-08-09 22:39:11.923 +0000 UTC'>August 9, 2018</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;14 words</footer>
+  <a class="entry-link" aria-label="post link to webview调用小程序支付流程" href="http://localhost:1313/posts/2018-08-09-webview%E8%B0%83%E7%94%A8%E5%B0%8F%E7%A8%8B%E5%BA%8F%E6%94%AF%E4%BB%98%E6%B5%81%E7%A8%8B/"></a>
+</article>
+
+<article class="post-entry tag-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">同一页面巧妙使用多个element-ui的upload组件
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>问题 最近在使用SSR(服务器端渲染)方式引入vue&#43;element-ui开发一个商城项目的时候遇到一个问题:因为商城的订单是可能包含多个商品,所以订单的评价涉及到同一个页面多组表单的异步提交(每一组表单包含评价内容和上传的多张图片)
+由于element-ui的upload组件默认没有提供多个组件在同一页面绑定不同模型的接口,因此在网上搜了一下,搜到了这篇文章,文章中最后的建议是自己封装一个组件来调用upload组件,使用的时候直接调用自己封装的这个组件,但是项目时间紧迫,我这边希望更快的搞定这个问题,于是想到了以下办法
+解决方法 在upload组件的接口中,有一个data接口,可以绑定需要上传的除文件之外的其他数据对象,由于订单评价页的一个特点:每个商品不论数量大小都只会被评价一次,因此此处直接将当前数组中商品的uuid绑定到data并传递至上传接口,此操作后表单提交的payload就会包含类似如下数据:
+Content-Disposition: form-data; name=&#34;uuid&#34; E7D947BA-79F1-11E8-B786-00163E063020 而后台文件上传位置可以做一个判断:如果接收的上传请求包含额外参数,则全部原路返回,因此在上传成功后又会在on-success这个钩子接收到这个唯一的uuid,此处对当前页面商品数组进行遍历并进行比对,在包含返回的uuid对应数组的对应保存组图路径的数组push当前上传成功的图片路径
+this.data.goods_list.forEach((e,k)=&gt;{ if(e.uuid === response.uuid){ e.evaluate.thumbs.push(response.url) } }) 以下是完整代码(html):
+&lt;div class=&#34;userEva-cont&#34; v-for=&#34;(item,key) in data.goods_list&#34;&gt; &lt;table class=&#34;userEva-table&#34;&gt; &lt;thead&gt; &lt;tr&gt; &lt;th width=&#34;420&#34;&gt;商品&lt;/th&gt; &lt;th width=&#34;280&#34;&gt;型号&lt;/th&gt; &lt;th width=&#34;280&#34;&gt;数量&lt;/th&gt; &lt;/tr&gt; &lt;/thead&gt; &lt;tbody&gt; &lt;tr&gt; &lt;td&gt; &lt;div class=&#34;evaluate-pic&#34;&gt;&lt;a :href=&#34;&#39;/product/&#39;&#43;item.goods_id&#43;&#39;.html&#39;&#34;&gt;&lt;img :src=&#34;&#39;__PHOTO__&#39;&#43;item.thumb&#34;&gt;&lt;/a&gt;&lt;/div&gt; &lt;div class=&#34;evaluate-text&#34;&gt; &lt;h3&gt;&lt;a&gt;{{item.goods_name}}&lt;/a&gt;&lt;/h3&gt; &lt;p&gt;编号：{{item.uuid}}&lt;/p&gt; &lt;/div&gt; &lt;/td&gt; &lt;td&gt;型号：{{item.goods_specification_name}}&lt;/td&gt; &lt;td&gt;{{item.num}}&lt;/td&gt; &lt;/tr&gt; &lt;/tbody&gt; &lt;/table&gt; &lt;div class=&#34;evaluate-wrap&#34;&gt; &lt;form&gt; &lt;dl&gt; &lt;dt&gt;评论：&lt;/dt&gt; &lt;dd&gt; &lt;textarea v-model=&#34;item.evaluate.content&#34; placeholder=&#34;评论内容&#34;&gt;&lt;/textarea&gt; &lt;/dd&gt; &lt;/dl&gt; &lt;dl&gt; &lt;dt&gt;晒单：&lt;/dt&gt; &lt;dd&gt; &lt;el-upload class=&#34;upload-demo&#34; :action=&#34;basePath&#34; :on-preview=&#34;handlePreview&#34; :on-remove=&#34;handleRemove&#34; drag multiple :data=&#34;item&#34; :limit=&#34;5&#34; :on-success=&#34;setFileList&#34; list-type=&#34;picture&#34;&gt; &lt;i class=&#34;el-icon-upload&#34;&gt;&lt;/i&gt; &lt;div class=&#34;el-upload__text&#34;&gt;将文件拖到此处，或&lt;em&gt;点击上传&lt;/em&gt;&lt;/div&gt; &lt;div class=&#34;el-upload__tip&#34; slot=&#34;tip&#34;&gt;只能上传jpg/png文件，且不超过500kb&lt;/div&gt; &lt;/el-upload&gt; &lt;/dd&gt; &lt;/dl&gt; &lt;div class=&#34;evaluate-btns&#34;&gt; &lt;button type=&#34;button&#34; class=&#34;evaluate-sub&#34; @click=&#34;submit(item....</p>
+  </div>
+  <footer class="entry-footer"><span title='2018-06-30 22:39:11.923 +0000 UTC'>June 30, 2018</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;230 words</footer>
+  <a class="entry-link" aria-label="post link to 同一页面巧妙使用多个element-ui的upload组件" href="http://localhost:1313/posts/2018-06-30-%E5%90%8C%E4%B8%80%E9%A1%B5%E9%9D%A2%E5%B7%A7%E5%A6%99%E4%BD%BF%E7%94%A8%E5%A4%9A%E4%B8%AAelement-ui%E7%9A%84upload%E7%BB%84%E4%BB%B6/"></a>
+</article>
+
+<article class="post-entry tag-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Vue开发中的一些总结
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>关于axios的使用细节 基于vue做spa开发,个人很多时候使用的请求扩展是axios,这个扩展会把常用的请求封装好发送出去,使用的时候只需要传参数即可。今天遇到的一个问题是后端接口接收get方式传参,我这边有一个数组需要通过get方式传递过去,假设数组名称是:ids,请求中默认就是ids[]的形式,接口需要提供ids的形式,此时需要引入qs扩展,并在请求位置添加一项配置,以转换参数格式,示例代码如下:
+/* * todo :会员审核列表的通过与驳回(批量和单个为同一个方法), 需要管理员登陆 * @param data object * */ export function userInfoCheck(data) { return request({ url: &#39;/backend/userInfoCheck&#39;, method: &#39;get&#39;, params: data, paramsSerializer: function(params) { return qs.stringify(params, { arrayFormat: &#39;repeat&#39; }) } }) } </p>
+  </div>
+  <footer class="entry-footer"><span title='2018-01-26 22:39:11.923 +0000 UTC'>January 26, 2018</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;37 words</footer>
+  <a class="entry-link" aria-label="post link to Vue开发中的一些总结" href="http://localhost:1313/posts/2018-01-26-vue%E5%BC%80%E5%8F%91%E4%B8%AD%E7%9A%84%E4%B8%80%E4%BA%9B%E7%BB%86%E8%8A%82/"></a>
+</article>
+
+<article class="post-entry tag-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">关于vue中$nextTick的一点使用心得
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>当下公司在做一个媒体门户网站,后台由另一家公司使用java开发并提供接口,本人负责开发后台页面,使用的是vue-element-admin开发
+下面说一下问题场景,在开发过程中有一个后台管理员角色页面,其中包含一个表单dialog,在其中使用了el-tree组件,相关 代码结构如下:
+&lt;div class=&#34;filter-container&#34;&gt; &lt;el-button class=&#34;filter-item&#34; style=&#34;margin-left: 10px;&#34; v-waves @click=&#34;handleCreate&#34; type=&#34;primary&#34; icon=&#34;el-icon-edit&#34;&gt;新增角色 &lt;/el-button&gt; &lt;/div&gt; &lt;el-dialog :title=&#34;textMap[dialogStatus]&#34; :visible.sync=&#34;dialogFormVisible&#34; width=&#34;50%&#34;&gt; &lt;el-form :rules=&#34;rules&#34; ref=&#34;dataForm&#34; :model=&#34;temp&#34; label-position=&#34;top&#34; label-width=&#34;90px&#34; style=&#39;width: 400px; margin-left:50px;&#39;&gt; &lt;el-form-item label=&#34;选择权限&#34; prop=&#34;sysPermission&#34;&gt; &lt;el-tree ref=&#34;tree&#34; :data=&#34;sysPermission&#34; :props=&#34;formProps&#34; show-checkbox @check-change=&#34;handleCheckChange&#34; node-key=&#34;id&#34;&gt;&lt;/el-tree&gt; &lt;/el-form-item&gt; &lt;/el-form&gt; &lt;/el-dialog&gt; 相关的js如下:
+export default { name: &#39;sysRoleList&#39;, data() { return { tableKey: 0, list: null, total: null, listLoading: true, formLoading: true, listQuery: { page: 1, limit: 20, importance: undefined, title: undefined, type: undefined, sort: &#39;&#43;id&#39; }, dialogFormVisible: false, dialogStatus: &#39;update&#39;, textMap: { update: &#39;编辑角色&#39;, create: &#39;新增角色&#39; }, rules: { sysRoleName: [{required: true, message: &#39;必须填写角色名称&#39;, trigger: &#39;blur&#39;}] }, // 表单数据 temp: { id: &#39;&#39;, sysPermissionList: [], sysRoleName: &#39;&#39; }, currentKeys: [], // 表单权限字段映射 formProps: { label: &#39;sysPermissionName&#39; }, sysPermission: {} } }, created() { // 列表数据 // this....</p>
+  </div>
+  <footer class="entry-footer"><span title='2018-01-24 22:39:11.923 +0000 UTC'>January 24, 2018</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;272 words</footer>
+  <a class="entry-link" aria-label="post link to 关于vue中$nextTick的一点使用心得" href="http://localhost:1313/posts/2018-01-24-vue%E5%BC%80%E5%8F%91%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98%E5%B0%8F%E7%BB%93/"></a>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

@@ -1,12 +1,6 @@
 - id: prev_page
   translation: "Prev"
 
-- id: first_page
-  translation: "First"
-
-- id: last_page
-  translation: "Last"
-
 - id: next_page
   translation: "Next"
 

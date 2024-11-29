@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>同一页面巧妙使用多个element-ui的upload组件 | Lester&#39;s Blog</title>
+<meta name="keywords" content="vue, element-ui">
+<meta name="description" content="element-ui多组upload组件使用技巧">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2018-06-30-%E5%90%8C%E4%B8%80%E9%A1%B5%E9%9D%A2%E5%B7%A7%E5%A6%99%E4%BD%BF%E7%94%A8%E5%A4%9A%E4%B8%AAelement-ui%E7%9A%84upload%E7%BB%84%E4%BB%B6/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2018-06-30-%E5%90%8C%E4%B8%80%E9%A1%B5%E9%9D%A2%E5%B7%A7%E5%A6%99%E4%BD%BF%E7%94%A8%E5%A4%9A%E4%B8%AAelement-ui%E7%9A%84upload%E7%BB%84%E4%BB%B6/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      同一页面巧妙使用多个element-ui的upload组件
+    </h1>
+    <div class="post-description">
+      element-ui多组upload组件使用技巧
+    </div>
+    <div class="post-meta"><span title='2018-06-30 22:39:11.923 +0000 UTC'>June 30, 2018</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;230 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e9%97%ae%e9%a2%98" aria-label="问题">问题</a></li>
+                <li>
+                    <a href="#%e8%a7%a3%e5%86%b3%e6%96%b9%e6%b3%95" aria-label="解决方法">解决方法</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h3 id="问题">问题<a hidden class="anchor" aria-hidden="true" href="#问题">#</a></h3>
+<p>最近在使用SSR(服务器端渲染)方式引入<code>vue</code>+<code>element-ui</code>开发一个商城项目的时候遇到一个问题:因为商城的订单是可能包含多个商品,所以订单的评价涉及到同一个页面多组表单的异步提交(每一组表单包含评价内容和上传的多张图片)<br>
+由于<code>element-ui</code>的<code>upload</code>组件默认没有提供多个组件在同一页面绑定不同模型的接口,因此在网上搜了一下,搜到了<a href="https://www.guoxiongfei.cn/cntech/2701.html">这篇文章</a>,文章中最后的建议是自己封装一个组件来调用<code>upload</code>组件,使用的时候直接调用自己封装的这个组件,但是项目时间紧迫,我这边希望更快的搞定这个问题,于是想到了以下办法</p>
+<h3 id="解决方法">解决方法<a hidden class="anchor" aria-hidden="true" href="#解决方法">#</a></h3>
+<p>在<code>upload</code>组件的接口中,有一个<code>data</code>接口,可以绑定需要上传的除文件之外的其他数据对象,由于订单评价页的一个特点:每个商品不论数量大小都只会被评价一次,因此此处直接将当前数组中商品的uuid绑定到data并传递至上传接口,此操作后表单提交的payload就会包含类似如下数据:</p>
+<pre tabindex="0"><code>Content-Disposition: form-data; name=&#34;uuid&#34;
+
+E7D947BA-79F1-11E8-B786-00163E063020
+</code></pre><p>而后台文件上传位置可以做一个判断:如果接收的上传请求包含额外参数,则全部原路返回,因此在上传成功后又会在<code>on-success</code>这个钩子接收到这个唯一的uuid,此处对当前页面商品数组进行遍历并进行比对,在包含返回的<code>uuid</code>对应数组的对应保存组图路径的数组<code>push</code>当前上传成功的图片路径</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">goods_list</span>.<span style="color:#a6e22e">forEach</span>((<span style="color:#a6e22e">e</span>,<span style="color:#a6e22e">k</span>)=&gt;{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">uuid</span> <span style="color:#f92672">===</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">uuid</span>){
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">evaluate</span>.<span style="color:#a6e22e">thumbs</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">url</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>以下是完整代码(html):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span>&lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;userEva-cont&#34;</span> <span style="color:#a6e22e">v-for</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;(item,key) in data.goods_list&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#f92672">table</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;userEva-table&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;<span style="color:#f92672">thead</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;<span style="color:#f92672">tr</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">th</span> <span style="color:#a6e22e">width</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;420&#34;</span>&gt;商品&lt;/<span style="color:#f92672">th</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">th</span> <span style="color:#a6e22e">width</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;280&#34;</span>&gt;型号&lt;/<span style="color:#f92672">th</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">th</span> <span style="color:#a6e22e">width</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;280&#34;</span>&gt;数量&lt;/<span style="color:#f92672">th</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;/<span style="color:#f92672">tr</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;/<span style="color:#f92672">thead</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;<span style="color:#f92672">tbody</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;<span style="color:#f92672">tr</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">td</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;evaluate-pic&#34;</span>&gt;&lt;<span style="color:#f92672">a</span> <span style="color:#a6e22e">:href</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&#39;/product/&#39;+item.goods_id+&#39;.html&#39;&#34;</span>&gt;&lt;<span style="color:#f92672">img</span> <span style="color:#a6e22e">:src</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&#39;__PHOTO__&#39;+item.thumb&#34;</span>&gt;&lt;/<span style="color:#f92672">a</span>&gt;&lt;/<span style="color:#f92672">div</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;evaluate-text&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>                    &lt;<span style="color:#f92672">h3</span>&gt;&lt;<span style="color:#f92672">a</span>&gt;{{item.goods_name}}&lt;/<span style="color:#f92672">a</span>&gt;&lt;/<span style="color:#f92672">h3</span>&gt;
+</span></span><span style="display:flex;"><span>                    &lt;<span style="color:#f92672">p</span>&gt;编号：{{item.uuid}}&lt;/<span style="color:#f92672">p</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;/<span style="color:#f92672">div</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;/<span style="color:#f92672">td</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">td</span>&gt;型号：{{item.goods_specification_name}}&lt;/<span style="color:#f92672">td</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">td</span>&gt;{{item.num}}&lt;/<span style="color:#f92672">td</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;/<span style="color:#f92672">tr</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;/<span style="color:#f92672">tbody</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#f92672">table</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;evaluate-wrap&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;<span style="color:#f92672">form</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">dl</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;<span style="color:#f92672">dt</span>&gt;评论：&lt;/<span style="color:#f92672">dt</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;<span style="color:#f92672">dd</span>&gt;
+</span></span><span style="display:flex;"><span>                    &lt;<span style="color:#f92672">textarea</span> <span style="color:#a6e22e">v-model</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;item.evaluate.content&#34;</span> <span style="color:#a6e22e">placeholder</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;评论内容&#34;</span>&gt;&lt;/<span style="color:#f92672">textarea</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;/<span style="color:#f92672">dd</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;/<span style="color:#f92672">dl</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">dl</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;<span style="color:#f92672">dt</span>&gt;晒单：&lt;/<span style="color:#f92672">dt</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;<span style="color:#f92672">dd</span>&gt;
+</span></span><span style="display:flex;"><span>                    &lt;<span style="color:#f92672">el-upload</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;upload-demo&#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">:action</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;basePath&#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">:on-preview</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;handlePreview&#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">:on-remove</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;handleRemove&#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">drag</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">multiple</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">:data</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;item&#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">:limit</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;5&#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">:on-success</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;setFileList&#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">list-type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;picture&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>                        &lt;<span style="color:#f92672">i</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;el-icon-upload&#34;</span>&gt;&lt;/<span style="color:#f92672">i</span>&gt;
+</span></span><span style="display:flex;"><span>                        &lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;el-upload__text&#34;</span>&gt;将文件拖到此处，或&lt;<span style="color:#f92672">em</span>&gt;点击上传&lt;/<span style="color:#f92672">em</span>&gt;&lt;/<span style="color:#f92672">div</span>&gt;
+</span></span><span style="display:flex;"><span>                        &lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;el-upload__tip&#34;</span> <span style="color:#a6e22e">slot</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;tip&#34;</span>&gt;只能上传jpg/png文件，且不超过500kb&lt;/<span style="color:#f92672">div</span>&gt;
+</span></span><span style="display:flex;"><span>                    &lt;/<span style="color:#f92672">el-upload</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;/<span style="color:#f92672">dd</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;/<span style="color:#f92672">dl</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;evaluate-btns&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;<span style="color:#f92672">button</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;button&#34;</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;evaluate-sub&#34;</span> <span style="color:#960050;background-color:#1e0010">@</span><span style="color:#a6e22e">click</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;submit(item.evaluate,item)&#34;</span>&gt;提交评价&lt;/<span style="color:#f92672">button</span>&gt;
+</span></span><span style="display:flex;"><span>                &lt;<span style="color:#f92672">label</span>&gt;&lt;<span style="color:#f92672">input</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;checkbox&#34;</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;evaluate-show&#34;</span> <span style="color:#a6e22e">v-model</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;item.evaluate.is_anonymous&#34;</span>&gt;匿名评价&lt;/<span style="color:#f92672">label</span>&gt;
+</span></span><span style="display:flex;"><span>            &lt;/<span style="color:#f92672">div</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;/<span style="color:#f92672">form</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#f92672">div</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">div</span>&gt;
+</span></span></code></pre></div><p>js</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    * todo:初始化vue
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    * */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">app</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Vue</span>({
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">el</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;#container&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">__PAGE_DATA__</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">evaluateUrl</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;/evaluate.html&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">imgDialogVisible</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">false</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">tempPath</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">basePath</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">mounted</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">basePath</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">Vue</span>.<span style="color:#a6e22e">prototype</span>.<span style="color:#a6e22e">fileUploadBasePath</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">methods</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">handleRemove</span>(<span style="color:#a6e22e">file</span>, <span style="color:#a6e22e">fileList</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">goods_list</span>.<span style="color:#a6e22e">forEach</span>((<span style="color:#a6e22e">e</span>,<span style="color:#a6e22e">k</span>)=&gt;{
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">uuid</span> <span style="color:#f92672">===</span> <span style="color:#a6e22e">file</span>.<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">uuid</span>){
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">//找到当前url下标
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">index</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">evaluate</span>.<span style="color:#a6e22e">thumbs</span>.<span style="color:#a6e22e">indexOf</span>(<span style="color:#a6e22e">file</span>.<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">url</span>)
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">index</span> <span style="color:#f92672">!==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>){
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">//删除
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">evaluate</span>.<span style="color:#a6e22e">thumbs</span>.<span style="color:#a6e22e">splice</span>(<span style="color:#a6e22e">index</span>,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>                    }
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            })
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">handlePreview</span>(<span style="color:#a6e22e">file</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">tempPath</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">file</span>.<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">url</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">imgDialogVisible</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">setFileList</span>(<span style="color:#a6e22e">response</span>, <span style="color:#a6e22e">file</span>, <span style="color:#a6e22e">fileList</span>){
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">goods_list</span>.<span style="color:#a6e22e">forEach</span>((<span style="color:#a6e22e">e</span>,<span style="color:#a6e22e">k</span>)=&gt;{
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">uuid</span> <span style="color:#f92672">===</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">uuid</span>){
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">evaluate</span>.<span style="color:#a6e22e">thumbs</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">url</span>)
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            })
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">submit</span>(<span style="color:#a6e22e">evaluate</span>,<span style="color:#a6e22e">item</span>){
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">evaluate</span>.<span style="color:#a6e22e">id</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">item</span>.<span style="color:#a6e22e">goods_id</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">evaluate</span>.<span style="color:#a6e22e">goods_name</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">item</span>.<span style="color:#a6e22e">goods_name</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">evaluate</span>.<span style="color:#a6e22e">goods_specification_name</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">item</span>.<span style="color:#a6e22e">goods_specification_name</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">evaluate</span>.<span style="color:#a6e22e">order_id</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">goods</span>.<span style="color:#a6e22e">o_id</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">evaluate</span> <span style="color:#f92672">=</span> Object.<span style="color:#a6e22e">assign</span>({}, <span style="color:#a6e22e">evaluate</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$http</span>.<span style="color:#a6e22e">post</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">evaluateUrl</span>,{<span style="color:#a6e22e">no</span><span style="color:#f92672">:</span><span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">goods</span>.<span style="color:#a6e22e">o_orderno</span>,<span style="color:#a6e22e">evaluate</span><span style="color:#f92672">:</span><span style="color:#a6e22e">evaluate</span>}).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">response</span> =&gt; {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">status</span> <span style="color:#f92672">===</span> <span style="color:#ae81ff">200</span>){
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">//重新拉取数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$http</span>.<span style="color:#a6e22e">get</span>(<span style="color:#a6e22e">location</span>.<span style="color:#a6e22e">href</span>).<span style="color:#a6e22e">then</span>(<span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">response</span>){
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">status</span> <span style="color:#f92672">===</span> <span style="color:#ae81ff">200</span>){
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$message</span>({
+</span></span><span style="display:flex;"><span>                                <span style="color:#a6e22e">message</span><span style="color:#f92672">:</span><span style="color:#e6db74">&#39;评价成功!&#39;</span>,
+</span></span><span style="display:flex;"><span>                                <span style="color:#a6e22e">type</span><span style="color:#f92672">:</span><span style="color:#e6db74">&#39;success&#39;</span>
+</span></span><span style="display:flex;"><span>                            })
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">//重新拉取数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">data</span>
+</span></span><span style="display:flex;"><span>                        }
+</span></span><span style="display:flex;"><span>                    }).<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">e</span> =&gt; {})
+</span></span><span style="display:flex;"><span>                }<span style="color:#66d9ef">else</span>{
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$message</span>({
+</span></span><span style="display:flex;"><span>                        <span style="color:#a6e22e">message</span><span style="color:#f92672">:</span><span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">message</span>,
+</span></span><span style="display:flex;"><span>                        <span style="color:#a6e22e">type</span><span style="color:#f92672">:</span><span style="color:#e6db74">&#39;error&#39;</span>
+</span></span><span style="display:flex;"><span>                    })
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            }).<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">e</span> =&gt; {})
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><blockquote>
+<p>至此,经过测试,解决了同一页面多个upload组件上传预览并分别异步提交对应表单到后台的问题</p>
+</blockquote>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/vue/">Vue</a></li>
+      <li><a href="http://localhost:1313/tags/element-ui/">Element-Ui</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/2018-07-05-%E6%AC%A2%E8%BF%8E%E6%9D%A5%E6%88%91%E7%9A%84%E6%96%B0%E5%8D%9A%E5%AE%A2/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>欢迎来我的新博客</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2018-06-06-gitlab%E5%87%BA%E7%8E%B0forbidden%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95/">
+    <span class="title">Next »</span>
+    <br>
+    <span>gitlab出现forbidden的解决方法</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

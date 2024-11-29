@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Openresty实现访问限流 | Lester&#39;s Blog</title>
+<meta name="keywords" content="openresty">
+<meta name="description" content="自己动手实现一个基于nginx&#43;lua&#43;redis的限制client访问频率&#43;自动拉黑的限流方案">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2019-03-02-openresty%E5%AE%9E%E7%8E%B0%E8%AE%BF%E9%97%AE%E9%99%90%E6%B5%81/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2019-03-02-openresty%E5%AE%9E%E7%8E%B0%E8%AE%BF%E9%97%AE%E9%99%90%E6%B5%81/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Openresty实现访问限流
+    </h1>
+    <div class="post-description">
+      自己动手实现一个基于nginx&#43;lua&#43;redis的限制client访问频率&#43;自动拉黑的限流方案
+    </div>
+    <div class="post-meta"><span title='2019-03-02 22:39:11.923 +0000 UTC'>March 2, 2019</span>&nbsp;·&nbsp;7 min&nbsp;·&nbsp;1477 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e5%9f%ba%e6%9c%ac%e6%a6%82%e5%bf%b5" aria-label="基本概念">基本概念</a></li>
+                <li>
+                    <a href="#%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af" aria-label="应用场景">应用场景</a></li>
+                <li>
+                    <a href="#luanginxmodule%e7%9a%84%e6%89%a7%e8%a1%8c%e9%98%b6%e6%ae%b5" aria-label="LuaNginxModule的执行阶段">LuaNginxModule的执行阶段</a></li>
+                <li>
+                    <a href="#%e9%99%90%e6%b5%81%e7%9a%84%e5%ae%9e%e7%8e%b0" aria-label="限流的实现">限流的实现</a></li>
+                <li>
+                    <a href="#%e6%95%88%e6%9e%9c%e5%af%b9%e6%af%94" aria-label="效果对比">效果对比</a></li>
+                <li>
+                    <a href="#%e5%85%b6%e4%bb%96" aria-label="其他">其他</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h2 id="基本概念">基本概念<a hidden class="anchor" aria-hidden="true" href="#基本概念">#</a></h2>
+<p><img loading="lazy" src="https://ws1.sinaimg.cn/large/005NqLEEgy1g0oepurdfuj30b406tjsd.jpg"></p>
+<ul>
+<li>Nginx：高性能、高并发的Web服务器，拥有丰富的第三方模块。</li>
+<li>Lua：一种轻量级、可嵌入式的脚本语言。</li>
+<li>Ngx_lua：Nginx的一个模块，将Lua嵌入到Nginx中，这样就可以使用Lua编写应用脚本，部署到Nginx中运行，即Nginx变成了一个Web容器，这样开发人员就可以使用Lua语言开发高性能Web应用了。</li>
+</ul>
+<p><strong>引用官网的一个描述:</strong></p>
+<blockquote>
+<p>OpenResty® 的目标是让你的Web服务直接跑在 Nginx 服务内部，充分利用 Nginx 的非阻塞 I/O 模型，不仅仅对 HTTP 客户端请求,甚至于对远程后端诸如 MySQL、PostgreSQL、Memcached 以及 Redis 等都进行一致的高性能响应。</p>
+</blockquote>
+<h2 id="应用场景">应用场景<a hidden class="anchor" aria-hidden="true" href="#应用场景">#</a></h2>
+<ul>
+<li>在 Lua 中混合处理不同 Nginx 模块输出（proxy, drizzle, postgres, Redis, memcached 等）。</li>
+<li>在请求真正到达上游服务之前，Lua 中处理复杂的准入控制和安全检查。</li>
+<li>比较随意的控制应答头（通过 Lua）。</li>
+<li>从外部存储中获取后端信息，并用这些信息来实时选择哪一个后端来完成业务访问。</li>
+<li>在内容 handler 中随意编写复杂的 web 应用，同步编写异步访问后端数据库和其他存储。</li>
+<li>在 rewrite 阶段，通过 Lua 完成非常复杂的处理。</li>
+<li>在 Nginx 子查询、location 调用中，通过 Lua 实现高级缓存机制。</li>
+<li>对外暴露强劲的 Lua 语言，允许使用各种 Nginx 模块，自由拼合没有任何限制。该模块的脚本有充分的灵活性，同时提供的性能水平与本地 C 语言程序无论是在 CPU 时间方面以及内存占用差距非常小。所有这些都要求 LuaJIT 2.x 是启用的。其他脚本语言实现通常很难满足这一性能水平。</li>
+</ul>
+<h2 id="luanginxmodule的执行阶段">LuaNginxModule的执行阶段<a hidden class="anchor" aria-hidden="true" href="#luanginxmodule的执行阶段">#</a></h2>
+<p><img loading="lazy" src="https://ws1.sinaimg.cn/large/005NqLEEgy1g0oeyqe5ujj30rx0pawfh.jpg"></p>
+<ul>
+<li>set_by_lua*: 流程分支处理判断变量初始化</li>
+<li>rewrite_by_lua*: 转发、重定向、缓存等功能(例如特定请求代理到外网)</li>
+<li>access_by_lua*: IP 准入、接口权限等情况集中处理(例如配合 iptable 完成简单防火墙)</li>
+<li>content_by_lua*: 内容生成</li>
+<li>header_filter_by_lua*: 响应头部过滤处理(例如添加头部信息)</li>
+<li>body_filter_by_lua*: 响应体过滤处理(例如完成应答内容统一成大写)</li>
+<li>log_by_lua*: 会话完成后本地异步完成日志记录(日志可以记录在本地，还可以同步到其他机器)</li>
+</ul>
+<h2 id="限流的实现">限流的实现<a hidden class="anchor" aria-hidden="true" href="#限流的实现">#</a></h2>
+<blockquote>
+<p>由于近期工作中所负责的项目是开发App和一个前后端分离的管理系统的数据接口(统一采用jwt作为身份认证方式),且第一期已经接近尾声,因此除了做一些php代码层面的缓存优化之外,想到了需要学习一下除了bloomfilter之外的防止缓存穿透的办法(直接在web服务器层面通过redis动态限制访问频率,优点,性能损耗小,全程没有php参与),碰巧网上看到了Openresty,又是基于nginx(熟悉的配方),又能解决当下遇到的问题(神奇的味道),于是经过了几天的学习,也参考了一些其他博客中类似的实现,现记录下本人目前动态限流的实现过程</p>
+</blockquote>
+<ol>
+<li>
+<p>openresty下的nginx目录大致这样一个结构(只需看有注释的位置)</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> |-- client_body_temp
+</span></span><span style="display:flex;"><span> |-- conf
+</span></span><span style="display:flex;"><span> |   |-- fastcgi.conf
+</span></span><span style="display:flex;"><span> |   |-- fastcgi.conf.default
+</span></span><span style="display:flex;"><span> |   |-- fastcgi_params
+</span></span><span style="display:flex;"><span> |   |-- fastcgi_params.default
+</span></span><span style="display:flex;"><span> |   |-- koi-utf
+</span></span><span style="display:flex;"><span> |   |-- koi-win
+</span></span><span style="display:flex;"><span> |   |-- mime.types
+</span></span><span style="display:flex;"><span> |   |-- mime.types.default
+</span></span><span style="display:flex;"><span> |   |-- nginx.conf <span style="color:#75715e">#主配置文件</span>
+</span></span><span style="display:flex;"><span> |   |-- nginx.conf.default
+</span></span><span style="display:flex;"><span> |   |-- scgi_params
+</span></span><span style="display:flex;"><span> |   |-- scgi_params.default
+</span></span><span style="display:flex;"><span> |   |-- uwsgi_params
+</span></span><span style="display:flex;"><span> |   |-- uwsgi_params.default
+</span></span><span style="display:flex;"><span> |   <span style="color:#e6db74">`</span>-- win-utf
+</span></span><span style="display:flex;"><span> |-- fastcgi_temp
+</span></span><span style="display:flex;"><span> |-- html
+</span></span><span style="display:flex;"><span> |   |-- 50x.html
+</span></span><span style="display:flex;"><span> |   <span style="color:#e6db74">`</span>-- index.html
+</span></span><span style="display:flex;"><span> |-- logs
+</span></span><span style="display:flex;"><span> |   |-- access.log -&gt; /dev/stdout
+</span></span><span style="display:flex;"><span> |   |-- error.log -&gt; /dev/stderr
+</span></span><span style="display:flex;"><span> |   <span style="color:#e6db74">`</span>-- nginx.pid
+</span></span><span style="display:flex;"><span> |-- lua
+</span></span><span style="display:flex;"><span> |   |-- lua-cjson
+</span></span><span style="display:flex;"><span> |   <span style="color:#e6db74">`</span>-- lua-resty-redis
+</span></span><span style="display:flex;"><span> |-- proxy_temp
+</span></span><span style="display:flex;"><span> |-- sbin
+</span></span><span style="display:flex;"><span> |   |-- nginx
+</span></span><span style="display:flex;"><span> |   <span style="color:#e6db74">`</span>-- stap-nginx
+</span></span><span style="display:flex;"><span> |-- scgi_temp
+</span></span><span style="display:flex;"><span> |-- src <span style="color:#75715e">#自定义lua脚本目录</span>
+</span></span><span style="display:flex;"><span> |   |-- access_flow_control.lua
+</span></span><span style="display:flex;"><span> |   |-- access_limit.lua
+</span></span><span style="display:flex;"><span> |   |-- access_limit_by_specific_rules.lua <span style="color:#75715e">#将使用的动态限流脚本</span>
+</span></span><span style="display:flex;"><span> |   <span style="color:#e6db74">`</span>-- handle_logs.lua
+</span></span><span style="display:flex;"><span> |-- tapset
+</span></span><span style="display:flex;"><span> |   |-- nginx.stp
+</span></span><span style="display:flex;"><span> |   <span style="color:#e6db74">`</span>-- ngx_lua.stp
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">`</span>-- uwsgi_temp
+</span></span></code></pre></div></li>
+<li>
+<p>在<code>nginx.conf</code>中加入如下配置</p>
+<pre tabindex="0"><code class="language-conf" data-lang="conf"> resolver 127.0.0.11 ipv6=off;#由于当前openresty安装在docker内,因此为了lua脚本中的hostname能被正确解析,添加此配置
+ lua_code_cache off;#关闭lua代码缓存,每次代码更新后无需重启nginx即可生效
+ server_tokens off;#隐藏openresty版本号
+</code></pre></li>
+<li>
+<p>在<code>conf.d/default.conf</code>中的相应<code>location</code>的<code>access</code>阶段挂载lua脚本</p>
+<pre tabindex="0"><code class="language-conf" data-lang="conf">location ~ \.php$ {
+    #lua_need_request_body on;
+    access_by_lua_file src/access_limit_by_specific_rules.lua;#在到达php处理前首先由挂载的lua脚本处理
+    fastcgi_pass   php72:9000;
+    fastcgi_index  index.php;
+    fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+    include        fastcgi_params;
+}
+</code></pre></li>
+<li>
+<p><code>access_limit_by_specific_rules.lua</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-lua" data-lang="lua"><span style="display:flex;"><span> <span style="color:#75715e">-- local cjson = require &#34;cjson&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">close_redis</span>(red)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> red <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--释放连接(连接池实现)</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> pool_max_idle_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">10000</span> <span style="color:#75715e">--毫秒</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> pool_size <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span> <span style="color:#75715e">--连接池大小</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> ok, err <span style="color:#f92672">=</span> red:set_keepalive(pool_max_idle_time, pool_size)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> ok <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         ngx.log(ngx.ERR, <span style="color:#e6db74">&#34;set redis keepalive error : &#34;</span>, err)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- ip最大频率</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> ipMaxFreq <span style="color:#f92672">=</span> <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- token最大频率</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> tokenMaxFreq <span style="color:#f92672">=</span> <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- 超过阈值后被ban时间</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> banExpire <span style="color:#f92672">=</span> <span style="color:#ae81ff">600</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     初始化redis
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> ]]</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> redis <span style="color:#f92672">=</span> require <span style="color:#e6db74">&#34;resty.redis&#34;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> red <span style="color:#f92672">=</span> redis:new()
+</span></span><span style="display:flex;"><span> red:set_timeout(<span style="color:#ae81ff">1000</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> host <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;redis&#39;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> port <span style="color:#f92672">=</span> <span style="color:#ae81ff">6379</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> ok, err <span style="color:#f92672">=</span> red:connect(host,port)
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> ok <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">return</span> close_redis(red)
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- 请注意这里 auth 的调用过程</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- local count</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- count, err = red:get_reused_times()</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- if 0 == count then</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--     ok, err = red:auth(&#34;password&#34;)</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--     if not ok then</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--         ngx.say(&#34;failed to auth: &#34;, err)</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--         return</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--     end</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- elseif err then</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--     ngx.say(&#34;failed to get reused times: &#34;, err)</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--     return</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     优先判断是否存在token
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> ]]</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--token名称,此处根据实际情况修改</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> token <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Authorization&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> clientToken <span style="color:#f92672">=</span> ngx.req.get_headers()[token]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     获取客户端真实IP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> ]]</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> clientIP <span style="color:#f92672">=</span> ngx.req.get_headers()[<span style="color:#e6db74">&#34;X-Real-IP&#34;</span>]
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> clientIP <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>     clientIP <span style="color:#f92672">=</span> ngx.req.get_headers()[<span style="color:#e6db74">&#34;x_forwarded_for&#34;</span>]
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> clientIP <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>     clientIP <span style="color:#f92672">=</span> ngx.var.remote_addr
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- 获取所有cookie，这里获取到的是一个字符串，如果不存在则返回nil</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- local clientHttpCookie = ngx.var.http_cookie</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">-- 获取单个cookie，_后面的cookie的name，如果不存在则返回nil</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">local</span> clientCookie <span style="color:#f92672">=</span> ngx.var.http_cookie
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> clientToken <span style="color:#f92672">~=</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> incrKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;user:&#34;</span><span style="color:#f92672">..</span>clientToken<span style="color:#f92672">..</span><span style="color:#e6db74">&#34;:freq&#34;</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> tokenBlockKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;userToken:&#34;</span><span style="color:#f92672">..</span>clientToken<span style="color:#f92672">..</span><span style="color:#e6db74">&#34;:block&#34;</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> ipBlockKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;userIp:&#34;</span><span style="color:#f92672">..</span>clientIP<span style="color:#f92672">..</span><span style="color:#e6db74">&#34;:block&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         判断是否被ban
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> is_block,err <span style="color:#f92672">=</span> red:get(tokenBlockKey) <span style="color:#75715e">-- check if token is blocked</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> tonumber(is_block) <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         ngx.exit(ngx.HTTP_FORBIDDEN)
+</span></span><span style="display:flex;"><span>         <span style="color:#66d9ef">return</span> close_redis(red)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> is_block,err <span style="color:#f92672">=</span> red:get(ipBlockKey) <span style="color:#75715e">-- check if ip is blocked</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> tonumber(is_block) <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         ngx.exit(ngx.HTTP_FORBIDDEN)
+</span></span><span style="display:flex;"><span>         <span style="color:#66d9ef">return</span> close_redis(red)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     每秒访问频率+1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     res, err <span style="color:#f92672">=</span> red:incr(incrKey)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         上一步操作成功,则为当前key设置过期时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> res <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:expire(incrKey,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         每秒请求数大于阈值,屏蔽指定值(秒)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> res <span style="color:#f92672">&gt;</span> tokenMaxFreq <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">-- ban token</span>
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:set(tokenBlockKey,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:expire(tokenBlockKey,banExpire)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">-- ban ip</span>
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:set(ipBlockKey,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:expire(ipBlockKey,banExpire)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">-- ngx.log(ngx.ERR, tokenBlockKey)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">-- ngx.log(ngx.ERR, ipBlockKey)</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">elseif</span> clientCookie <span style="color:#f92672">~=</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> incrKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;user:&#34;</span><span style="color:#f92672">..</span>clientCookie<span style="color:#f92672">..</span><span style="color:#e6db74">&#34;:freq&#34;</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> cookieBlockKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;userToken:&#34;</span><span style="color:#f92672">..</span>clientCookie<span style="color:#f92672">..</span><span style="color:#e6db74">&#34;:block&#34;</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> ipBlockKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;userIp:&#34;</span><span style="color:#f92672">..</span>clientIP<span style="color:#f92672">..</span><span style="color:#e6db74">&#34;:block&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         判断是否被ban
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> is_block,err <span style="color:#f92672">=</span> red:get(cookieBlockKey) <span style="color:#75715e">-- check if token is blocked</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> tonumber(is_block) <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         ngx.exit(ngx.HTTP_FORBIDDEN)
+</span></span><span style="display:flex;"><span>         <span style="color:#66d9ef">return</span> close_redis(red)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> is_block,err <span style="color:#f92672">=</span> red:get(ipBlockKey) <span style="color:#75715e">-- check if ip is blocked</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> tonumber(is_block) <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         ngx.exit(ngx.HTTP_FORBIDDEN)
+</span></span><span style="display:flex;"><span>         <span style="color:#66d9ef">return</span> close_redis(red)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     每秒访问频率+1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     res, err <span style="color:#f92672">=</span> red:incr(incrKey)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         上一步操作成功,则为当前key设置过期时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> res <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:expire(incrKey,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         每秒请求数大于阈值,屏蔽指定值(秒)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> res <span style="color:#f92672">&gt;</span> tokenMaxFreq <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">-- ban cookie</span>
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:set(cookieBlockKey,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:expire(cookieBlockKey,banExpire)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">-- ban ip</span>
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:set(ipBlockKey,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:expire(ipBlockKey,banExpire)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">-- ngx.log(ngx.ERR, cookieBlockKey)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#75715e">-- ngx.log(ngx.ERR, ipBlockKey)</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> incrKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;user:&#34;</span><span style="color:#f92672">..</span>clientIP<span style="color:#f92672">..</span><span style="color:#e6db74">&#34;:freq&#34;</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> blockKey <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;userIp:&#34;</span><span style="color:#f92672">..</span>clientIP<span style="color:#f92672">..</span><span style="color:#e6db74">&#34;:block&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         判断是否被ban
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">local</span> is_block,err <span style="color:#f92672">=</span> red:get(blockKey) <span style="color:#75715e">-- check if ip is blocked</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> tonumber(is_block) <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         ngx.exit(ngx.HTTP_FORBIDDEN)
+</span></span><span style="display:flex;"><span>         <span style="color:#66d9ef">return</span> close_redis(red)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         每秒访问频率+1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     res, err <span style="color:#f92672">=</span> red:incr(incrKey)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         上一步操作成功,则为当前key设置过期时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> res <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:expire(incrKey,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         每秒请求数大于阈值,屏蔽指定值(秒)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     ]]</span>
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> res <span style="color:#f92672">&gt;</span> ipMaxFreq <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:set(blockKey,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>         res, err <span style="color:#f92672">=</span> red:expire(blockKey,banExpire)
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     关闭redis
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> ]]</span>
+</span></span><span style="display:flex;"><span> close_redis(red)
+</span></span></code></pre></div><blockquote>
+<p><strong>以上代码处理了请求可能携带token/cookie或直接访问的情况;对直接访问的请求通过ip识别身份(但一个ip可能对应多个client),因此配置一个较高的每秒频率,超过频率后对ip进行全局forbidden至指定时间;对携带token/cookie访问的请求通过token/cookie识别身份(通常是同一个client),设置一个较低的频率,超过频率后对该token/cookie和其所在ip进行全局forbidden至指定时间</strong></p>
+</blockquote>
+</li>
+<li>
+<p>完成配置后,重启服务器</p>
+<pre tabindex="0"><code> nginx -s reload
+</code></pre></li>
+</ol>
+<h2 id="效果对比">效果对比<a hidden class="anchor" aria-hidden="true" href="#效果对比">#</a></h2>
+<blockquote>
+<p>注意ab test的一个坑,用于测试的文件需要保证每一次返回的html长度一致,否则ab test会判定为<code>length failure</code>,影响最终结果(当然也可以忽略它),<a href="https://stackoverflow.com/questions/579450/load-testing-with-ab-fake-failed-requests-length">参考</a></p>
+</blockquote>
+<p>1 . 频率限制前,<code>ab -n 100 -c 10 localhost/index.php</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> ➜  ~ ab -n <span style="color:#ae81ff">100</span> -c <span style="color:#ae81ff">10</span> localhost/index.php   
+</span></span><span style="display:flex;"><span> This is ApacheBench, Version 2.3 &lt;$Revision: <span style="color:#ae81ff">1843412</span> $&gt;
+</span></span><span style="display:flex;"><span> Copyright <span style="color:#ae81ff">1996</span> Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+</span></span><span style="display:flex;"><span> Licensed to The Apache Software Foundation, http://www.apache.org/
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Benchmarking localhost <span style="color:#f92672">(</span>be patient<span style="color:#f92672">)</span>.....done
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Server Software:        openresty
+</span></span><span style="display:flex;"><span> Server Hostname:        localhost
+</span></span><span style="display:flex;"><span> Server Port:            <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Document Path:          /index.php
+</span></span><span style="display:flex;"><span> Document Length:        <span style="color:#ae81ff">3</span> bytes
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Concurrency Level:      <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> Time taken <span style="color:#66d9ef">for</span> tests:   0.106 seconds
+</span></span><span style="display:flex;"><span> Complete requests:      <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span> Failed requests:        <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> Total transferred:      <span style="color:#ae81ff">16300</span> bytes
+</span></span><span style="display:flex;"><span> HTML transferred:       <span style="color:#ae81ff">300</span> bytes
+</span></span><span style="display:flex;"><span> Requests per second:    941.97 <span style="color:#f92672">[</span><span style="color:#75715e">#/sec] (mean)</span>
+</span></span><span style="display:flex;"><span> Time per request:       10.616 <span style="color:#f92672">[</span>ms<span style="color:#f92672">]</span> <span style="color:#f92672">(</span>mean<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Time per request:       1.062 <span style="color:#f92672">[</span>ms<span style="color:#f92672">]</span> <span style="color:#f92672">(</span>mean, across all concurrent requests<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Transfer rate:          149.94 <span style="color:#f92672">[</span>Kbytes/sec<span style="color:#f92672">]</span> received
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Connection Times <span style="color:#f92672">(</span>ms<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>             min  mean<span style="color:#f92672">[</span>+/-sd<span style="color:#f92672">]</span> median   max
+</span></span><span style="display:flex;"><span> Connect:        <span style="color:#ae81ff">0</span>    <span style="color:#ae81ff">1</span>   1.8      <span style="color:#ae81ff">0</span>       <span style="color:#ae81ff">7</span>
+</span></span><span style="display:flex;"><span> Processing:     <span style="color:#ae81ff">2</span>    <span style="color:#ae81ff">9</span>   2.2      <span style="color:#ae81ff">9</span>      <span style="color:#ae81ff">16</span>
+</span></span><span style="display:flex;"><span> Waiting:        <span style="color:#ae81ff">0</span>    <span style="color:#ae81ff">9</span>   2.4      <span style="color:#ae81ff">9</span>      <span style="color:#ae81ff">16</span>
+</span></span><span style="display:flex;"><span> Total:          <span style="color:#ae81ff">5</span>   <span style="color:#ae81ff">10</span>   3.0      <span style="color:#ae81ff">9</span>      <span style="color:#ae81ff">19</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Percentage of the requests served within a certain time <span style="color:#f92672">(</span>ms<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> 50%      <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> 66%      <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> 75%     <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> 80%     <span style="color:#ae81ff">11</span>
+</span></span><span style="display:flex;"><span> 90%     <span style="color:#ae81ff">15</span>
+</span></span><span style="display:flex;"><span> 95%     <span style="color:#ae81ff">18</span>
+</span></span><span style="display:flex;"><span> 98%     <span style="color:#ae81ff">19</span>
+</span></span><span style="display:flex;"><span> 99%     <span style="color:#ae81ff">19</span>
+</span></span><span style="display:flex;"><span> 100%     <span style="color:#ae81ff">19</span> <span style="color:#f92672">(</span>longest request<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>2 . 频率限制后(限制为9),<code>ab -n 100 -c 10 localhost/index.php</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> ➜  ~ ab -n <span style="color:#ae81ff">100</span> -c <span style="color:#ae81ff">10</span> localhost/index.php
+</span></span><span style="display:flex;"><span> This is ApacheBench, Version 2.3 &lt;$Revision: <span style="color:#ae81ff">1843412</span> $&gt;
+</span></span><span style="display:flex;"><span> Copyright <span style="color:#ae81ff">1996</span> Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+</span></span><span style="display:flex;"><span> Licensed to The Apache Software Foundation, http://www.apache.org/
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Benchmarking localhost <span style="color:#f92672">(</span>be patient<span style="color:#f92672">)</span>.....done
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Server Software:        openresty
+</span></span><span style="display:flex;"><span> Server Hostname:        localhost
+</span></span><span style="display:flex;"><span> Server Port:            <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Document Path:          /index.php
+</span></span><span style="display:flex;"><span> Document Length:        <span style="color:#ae81ff">3</span> bytes
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Concurrency Level:      <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> Time taken <span style="color:#66d9ef">for</span> tests:   0.088 seconds
+</span></span><span style="display:flex;"><span> Complete requests:      <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span> Failed requests:        <span style="color:#ae81ff">89</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">(</span>Connect: 0, Receive: 0, Length: 89, Exceptions: 0<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Non-2xx responses:      <span style="color:#ae81ff">89</span>
+</span></span><span style="display:flex;"><span> Total transferred:      <span style="color:#ae81ff">29650</span> bytes
+</span></span><span style="display:flex;"><span> HTML transferred:       <span style="color:#ae81ff">14807</span> bytes
+</span></span><span style="display:flex;"><span> Requests per second:    1131.03 <span style="color:#f92672">[</span><span style="color:#75715e">#/sec] (mean)</span>
+</span></span><span style="display:flex;"><span> Time per request:       8.841 <span style="color:#f92672">[</span>ms<span style="color:#f92672">]</span> <span style="color:#f92672">(</span>mean<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Time per request:       0.884 <span style="color:#f92672">[</span>ms<span style="color:#f92672">]</span> <span style="color:#f92672">(</span>mean, across all concurrent requests<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Transfer rate:          327.49 <span style="color:#f92672">[</span>Kbytes/sec<span style="color:#f92672">]</span> received
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Connection Times <span style="color:#f92672">(</span>ms<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>             min  mean<span style="color:#f92672">[</span>+/-sd<span style="color:#f92672">]</span> median   max
+</span></span><span style="display:flex;"><span> Connect:        <span style="color:#ae81ff">0</span>    <span style="color:#ae81ff">0</span>   0.2      <span style="color:#ae81ff">0</span>       <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span> Processing:     <span style="color:#ae81ff">4</span>    <span style="color:#ae81ff">8</span>   1.5      <span style="color:#ae81ff">8</span>      <span style="color:#ae81ff">15</span>
+</span></span><span style="display:flex;"><span> Waiting:        <span style="color:#ae81ff">4</span>    <span style="color:#ae81ff">8</span>   1.5      <span style="color:#ae81ff">8</span>      <span style="color:#ae81ff">15</span>
+</span></span><span style="display:flex;"><span> Total:          <span style="color:#ae81ff">4</span>    <span style="color:#ae81ff">8</span>   1.5      <span style="color:#ae81ff">8</span>      <span style="color:#ae81ff">15</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Percentage of the requests served within a certain time <span style="color:#f92672">(</span>ms<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> 50%      <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> 66%      <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> 75%      <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> 80%      <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> 90%     <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> 95%     <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> 98%     <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span> 99%     <span style="color:#ae81ff">15</span>
+</span></span><span style="display:flex;"><span> 100%     <span style="color:#ae81ff">15</span> <span style="color:#f92672">(</span>longest request<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>3 . 频率限制前,<code>ab -n 100 -c 10 -H 'Authorization: Bearer TestToken' localhost/index.php</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> ➜  ~ ab -n <span style="color:#ae81ff">100</span> -c <span style="color:#ae81ff">10</span> -H <span style="color:#e6db74">&#39;Authorization: Bearer TestToken&#39;</span> localhost/index.php
+</span></span><span style="display:flex;"><span> This is ApacheBench, Version 2.3 &lt;$Revision: <span style="color:#ae81ff">1843412</span> $&gt;
+</span></span><span style="display:flex;"><span> Copyright <span style="color:#ae81ff">1996</span> Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+</span></span><span style="display:flex;"><span> Licensed to The Apache Software Foundation, http://www.apache.org/
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Benchmarking localhost <span style="color:#f92672">(</span>be patient<span style="color:#f92672">)</span>.....done
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Server Software:        openresty
+</span></span><span style="display:flex;"><span> Server Hostname:        localhost
+</span></span><span style="display:flex;"><span> Server Port:            <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Document Path:          /index.php
+</span></span><span style="display:flex;"><span> Document Length:        <span style="color:#ae81ff">3</span> bytes
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Concurrency Level:      <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> Time taken <span style="color:#66d9ef">for</span> tests:   0.097 seconds
+</span></span><span style="display:flex;"><span> Complete requests:      <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span> Failed requests:        <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> Total transferred:      <span style="color:#ae81ff">16300</span> bytes
+</span></span><span style="display:flex;"><span> HTML transferred:       <span style="color:#ae81ff">300</span> bytes
+</span></span><span style="display:flex;"><span> Requests per second:    1028.65 <span style="color:#f92672">[</span><span style="color:#75715e">#/sec] (mean)</span>
+</span></span><span style="display:flex;"><span> Time per request:       9.721 <span style="color:#f92672">[</span>ms<span style="color:#f92672">]</span> <span style="color:#f92672">(</span>mean<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Time per request:       0.972 <span style="color:#f92672">[</span>ms<span style="color:#f92672">]</span> <span style="color:#f92672">(</span>mean, across all concurrent requests<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Transfer rate:          163.74 <span style="color:#f92672">[</span>Kbytes/sec<span style="color:#f92672">]</span> received
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Connection Times <span style="color:#f92672">(</span>ms<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>             min  mean<span style="color:#f92672">[</span>+/-sd<span style="color:#f92672">]</span> median   max
+</span></span><span style="display:flex;"><span> Connect:        <span style="color:#ae81ff">0</span>    <span style="color:#ae81ff">0</span>   0.1      <span style="color:#ae81ff">0</span>       <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span> Processing:     <span style="color:#ae81ff">3</span>    <span style="color:#ae81ff">9</span>   1.5      <span style="color:#ae81ff">9</span>      <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span> Waiting:        <span style="color:#ae81ff">2</span>    <span style="color:#ae81ff">9</span>   1.5      <span style="color:#ae81ff">9</span>      <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span> Total:          <span style="color:#ae81ff">3</span>    <span style="color:#ae81ff">9</span>   1.6      <span style="color:#ae81ff">9</span>      <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Percentage of the requests served within a certain time <span style="color:#f92672">(</span>ms<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> 50%      <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> 66%     <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> 75%     <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> 80%     <span style="color:#ae81ff">11</span>
+</span></span><span style="display:flex;"><span> 90%     <span style="color:#ae81ff">11</span>
+</span></span><span style="display:flex;"><span> 95%     <span style="color:#ae81ff">12</span>
+</span></span><span style="display:flex;"><span> 98%     <span style="color:#ae81ff">13</span>
+</span></span><span style="display:flex;"><span> 99%     <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span> 100%     <span style="color:#ae81ff">14</span> <span style="color:#f92672">(</span>longest request<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>4 . 频率限制后(限制为9),<code>ab -n 100 -c 10 -H 'Authorization: Bearer TestToken' localhost/index.php</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> ➜  ~ ab -n <span style="color:#ae81ff">100</span> -c <span style="color:#ae81ff">10</span> -H <span style="color:#e6db74">&#39;Authorization: Bearer TestToken&#39;</span> localhost/index.php
+</span></span><span style="display:flex;"><span> This is ApacheBench, Version 2.3 &lt;$Revision: <span style="color:#ae81ff">1843412</span> $&gt;
+</span></span><span style="display:flex;"><span> Copyright <span style="color:#ae81ff">1996</span> Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+</span></span><span style="display:flex;"><span> Licensed to The Apache Software Foundation, http://www.apache.org/
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Benchmarking localhost <span style="color:#f92672">(</span>be patient<span style="color:#f92672">)</span>.....done
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Server Software:        openresty
+</span></span><span style="display:flex;"><span> Server Hostname:        localhost
+</span></span><span style="display:flex;"><span> Server Port:            <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Document Path:          /index.php
+</span></span><span style="display:flex;"><span> Document Length:        <span style="color:#ae81ff">3</span> bytes
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Concurrency Level:      <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span> Time taken <span style="color:#66d9ef">for</span> tests:   0.076 seconds
+</span></span><span style="display:flex;"><span> Complete requests:      <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span> Failed requests:        <span style="color:#ae81ff">89</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">(</span>Connect: 0, Receive: 0, Length: 89, Exceptions: 0<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Non-2xx responses:      <span style="color:#ae81ff">89</span>
+</span></span><span style="display:flex;"><span> Total transferred:      <span style="color:#ae81ff">29650</span> bytes
+</span></span><span style="display:flex;"><span> HTML transferred:       <span style="color:#ae81ff">14807</span> bytes
+</span></span><span style="display:flex;"><span> Requests per second:    1307.21 <span style="color:#f92672">[</span><span style="color:#75715e">#/sec] (mean)</span>
+</span></span><span style="display:flex;"><span> Time per request:       7.650 <span style="color:#f92672">[</span>ms<span style="color:#f92672">]</span> <span style="color:#f92672">(</span>mean<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Time per request:       0.765 <span style="color:#f92672">[</span>ms<span style="color:#f92672">]</span> <span style="color:#f92672">(</span>mean, across all concurrent requests<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> Transfer rate:          378.50 <span style="color:#f92672">[</span>Kbytes/sec<span style="color:#f92672">]</span> received
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Connection Times <span style="color:#f92672">(</span>ms<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>             min  mean<span style="color:#f92672">[</span>+/-sd<span style="color:#f92672">]</span> median   max
+</span></span><span style="display:flex;"><span> Connect:        <span style="color:#ae81ff">0</span>    <span style="color:#ae81ff">0</span>   0.1      <span style="color:#ae81ff">0</span>       <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> Processing:     <span style="color:#ae81ff">2</span>    <span style="color:#ae81ff">7</span>   1.2      <span style="color:#ae81ff">7</span>      <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span> Waiting:        <span style="color:#ae81ff">2</span>    <span style="color:#ae81ff">7</span>   1.2      <span style="color:#ae81ff">7</span>      <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span> Total:          <span style="color:#ae81ff">2</span>    <span style="color:#ae81ff">7</span>   1.2      <span style="color:#ae81ff">7</span>      <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> Percentage of the requests served within a certain time <span style="color:#f92672">(</span>ms<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span> 50%      <span style="color:#ae81ff">7</span>
+</span></span><span style="display:flex;"><span> 66%      <span style="color:#ae81ff">7</span>
+</span></span><span style="display:flex;"><span> 75%      <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> 80%      <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> 90%      <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> 95%      <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span> 98%     <span style="color:#ae81ff">12</span>
+</span></span><span style="display:flex;"><span> 99%     <span style="color:#ae81ff">14</span>
+</span></span><span style="display:flex;"><span> 100%     <span style="color:#ae81ff">14</span> <span style="color:#f92672">(</span>longest request<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>5 . 在redis-cli中也可以获取到<code>block</code>数据</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> 127.0.0.1:6379&gt; get userIp:172.27.0.1:block
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;1&#34;</span>
+</span></span></code></pre></div><h2 id="其他">其他<a hidden class="anchor" aria-hidden="true" href="#其他">#</a></h2>
+<ul>
+<li>以上请求频率限制+自动拉黑一段时间的方式可以一定程度上拦截一些恶意请求,误伤小,让通过脚本携带token/cookie进行大量请求攻击难度变大</li>
+<li>最近把自己本地的<a href="https://github.com/lestat220255/allindocker">开发环境</a>发布到了github上,以方便在任何地方都可以快速搭建自己用着顺手的开发环境</li>
+<li>redis的key太长(目前用token作为key)会明显影响性能吗?答案是:<strong>不会</strong>  <a href="https://stackoverflow.com/questions/6320739/does-name-length-impact-performance-in-redis">参考网址</a></li>
+<li>关于docker容器内的DNS服务器地址为<code>127.0.0.11</code>的<a href="https://docs.docker.com/v17.09/engine/userguide/networking/configure-dns/">官方说明</a></li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/openresty/">Openresty</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/2019-03-08-laravel%E5%9F%BA%E4%BA%8Eredis%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E7%A7%92%E6%9D%80%E5%AE%9E%E7%8E%B0/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>laravel基于redis的分布式秒杀系统</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2019-02-19-mysql%E5%AE%9E%E7%8E%B0%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/">
+    <span class="title">Next »</span>
+    <br>
+    <span>mysql实现主从复制</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

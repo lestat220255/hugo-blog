@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>redis在目前项目的部分应用场景 | Lester&#39;s Blog</title>
+<meta name="keywords" content="redis, 记录">
+<meta name="description" content="设备在线状态保持,访客密码功能">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2019-04-03-redis%E5%9C%A8%E5%BD%93%E5%89%8D%E9%A1%B9%E7%9B%AE%E7%9A%84%E9%83%A8%E5%88%86%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2019-04-03-redis%E5%9C%A8%E5%BD%93%E5%89%8D%E9%A1%B9%E7%9B%AE%E7%9A%84%E9%83%A8%E5%88%86%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      redis在目前项目的部分应用场景
+    </h1>
+    <div class="post-description">
+      设备在线状态保持,访客密码功能
+    </div>
+    <div class="post-meta"><span title='2019-04-03 22:39:11.923 +0000 UTC'>April 3, 2019</span>&nbsp;·&nbsp;3 min&nbsp;·&nbsp;613 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e5%9c%ba%e6%99%af%e4%b8%80%e8%ae%be%e5%a4%87%e5%9c%a8%e7%ba%bf%e7%8a%b6%e6%80%81%e4%bf%9d%e6%8c%81" aria-label="场景一:设备在线状态保持">场景一:设备在线状态保持</a><ul>
+                        
+                <li>
+                    <a href="#%e9%9c%80%e6%b1%82" aria-label="需求">需求</a></li>
+                <li>
+                    <a href="#%e5%ae%9e%e7%8e%b0" aria-label="实现">实现</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e5%9c%ba%e6%99%af%e4%ba%8c%e5%b0%8f%e5%8c%ba%e8%ae%bf%e5%ae%a2%e5%8d%95%e5%85%83%e5%bc%80%e9%97%a8%e5%af%86%e7%a0%81" aria-label="场景二:小区访客单元开门密码">场景二:小区访客单元开门密码</a><ul>
+                        
+                <li>
+                    <a href="#%e9%9c%80%e6%b1%82-1" aria-label="需求">需求</a></li>
+                <li>
+                    <a href="#%e5%ae%9e%e7%8e%b0-1" aria-label="实现">实现</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h2 id="场景一设备在线状态保持">场景一:设备在线状态保持<a hidden class="anchor" aria-hidden="true" href="#场景一设备在线状态保持">#</a></h2>
+<h3 id="需求">需求<a hidden class="anchor" aria-hidden="true" href="#需求">#</a></h3>
+<p>有若干台设备,设备具备定时向server发送heartbeat的功能,后台需要在设备列表实时监控设备的在线情况(允许有不大于5分钟的时间延迟)</p>
+<h3 id="实现">实现<a hidden class="anchor" aria-hidden="true" href="#实现">#</a></h3>
+<p>在openresty配置中加入用于处理心跳请求的location块,如下</p>
+<pre tabindex="0"><code class="language-conf" data-lang="conf">location /device/heartbeat {
+	default_type text/html;
+	lua_need_request_body on;
+	content_by_lua_file src/heartbeat_detector.lua;
+}
+</code></pre><p>lua脚本</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-lua" data-lang="lua"><span style="display:flex;"><span><span style="color:#75715e">-- 获取请求方式,只允许POST请求</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">local</span> request_method <span style="color:#f92672">=</span> ngx.var.request_method
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- ngx.log(ngx.ERR, &#34;headers:&#34;..ngx.var.http_user_agent) </span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> request_method <span style="color:#f92672">~=</span> <span style="color:#e6db74">&#34;POST&#34;</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    ngx.exit(ngx.HTTP_NOT_ALLOWED)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">local</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">close_redis</span>(red)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> red <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">--释放连接(连接池实现)</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> pool_max_idle_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">10000</span> <span style="color:#75715e">--毫秒</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> pool_size <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span> <span style="color:#75715e">--连接池大小</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> ok, err <span style="color:#f92672">=</span> red:set_keepalive(pool_max_idle_time, pool_size)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> ok <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        ngx.log(ngx.ERR, <span style="color:#e6db74">&#34;set redis keepalive error : &#34;</span>, err)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- 引入json处理库</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">local</span> cjson <span style="color:#f92672">=</span> require <span style="color:#e6db74">&#34;cjson&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- 临时文件读取函数</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getFile</span>(file_name)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> f <span style="color:#f92672">=</span> assert(io.open(file_name, <span style="color:#e6db74">&#39;r&#39;</span>))
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> string <span style="color:#f92672">=</span> f:read(<span style="color:#e6db74">&#34;*all&#34;</span>)
+</span></span><span style="display:flex;"><span>    f:close()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> string
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- 获取请求体</span>
+</span></span><span style="display:flex;"><span>ngx.req.read_body()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- 获取请求body</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">local</span> data <span style="color:#f92672">=</span> ngx.req.get_body_data()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- 如果请求body为空,则从临时文件获取</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">==</span> data <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> file_name <span style="color:#f92672">=</span> ngx.req.get_body_file()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> file_name <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        data <span style="color:#f92672">=</span> getFile(file_name)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- 将data转换为object</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">local</span> obj <span style="color:#f92672">=</span> cjson.decode(data)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- 如果当前请求为心跳维持请求</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> obj.Name <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;KeepAlive&#34;</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">--[[
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    初始化redis
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    ]]</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> redis <span style="color:#f92672">=</span> require <span style="color:#e6db74">&#34;resty.redis&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> red <span style="color:#f92672">=</span> redis:new()
+</span></span><span style="display:flex;"><span>    red:set_timeout(<span style="color:#ae81ff">1000</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> host <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;ip&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> port <span style="color:#f92672">=</span> port
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> ok, err <span style="color:#f92672">=</span> red:connect(host,port)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> ok <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> close_redis(red)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">-- 请注意这里 auth 的调用过程</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> count
+</span></span><span style="display:flex;"><span>    ount, err <span style="color:#f92672">=</span> red:get_reused_times()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">==</span> count <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        ok, err <span style="color:#f92672">=</span> red:auth(<span style="color:#e6db74">&#34;password&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> ok <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>            ngx.say(<span style="color:#e6db74">&#34;failed to auth: &#34;</span>, err)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elseif</span> err <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        ngx.say(<span style="color:#e6db74">&#34;failed to get reused times: &#34;</span>, err)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">-- redis前缀</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">local</span> prefix <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;device_heartbeat:&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">-- 缓存心跳</span>
+</span></span><span style="display:flex;"><span>    res, err <span style="color:#f92672">=</span> red:set(prefix<span style="color:#f92672">..</span>obj.DeviceId, <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;EX&#39;</span>, <span style="color:#ae81ff">300</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span></code></pre></div><p>需要保证在项目的已有路由中没有<code>/device/heartbeat</code>,此时<code>/device/heartbeat</code>的请求会交给lua脚本处理,相对于php性能消耗更少,php后台获取到数据后可直接在redis中查找该设备对应的心跳key是否存在来确认设备是否在线</p>
+<h2 id="场景二小区访客单元开门密码">场景二:小区访客单元开门密码<a hidden class="anchor" aria-hidden="true" href="#场景二小区访客单元开门密码">#</a></h2>
+<h3 id="需求-1">需求<a hidden class="anchor" aria-hidden="true" href="#需求-1">#</a></h3>
+<p>当前项目的另外一个需求是:小区用户app具备访客密码生成/刷新功能,密码的过期时间是30分钟(使用被动过期实现),用户可将现有密码通过短信发送至访客手机,访客可通过密码进行小区单元门开门,同时对用户每天发送短信上限进行限制(5次),每次开门需要生成包含访客信息和被访人信息的记录</p>
+<h3 id="实现-1">实现<a hidden class="anchor" aria-hidden="true" href="#实现-1">#</a></h3>
+<p>使用两个key:value完成基本的实现,id_prefix_user_id:password,pwd_prefix_community_uuid_pwd:user_id<br>
+第一个key:用于app请求访客密码时判断是否需要重新生成,以及刷新密码时删除原有密码<br>
+第二个key:用于访客进行密码开锁时识别对应的用户,将访客和用户信息写入到访客记录<br>
+用户生成访客密码时拼接上小区的id(密码长度是4位,需要保证密码数量在10000以内,因此使用小区将用户分组减少数据量)</p>
+<p>以下为laravel框架的代码实现(项目使用了jwt,二次封装了laravel原有的<code>response()-&gt;json()</code>方法为<code>beJson()</code>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">namespace</span> <span style="color:#a6e22e">App\Http\Controllers</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#a6e22e">App\Traits\JsonResponse</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#a6e22e">App\Traits\SendSMS</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#a6e22e">Illuminate\Http\Request</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#a6e22e">Illuminate\Support\Facades\Hash</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#a6e22e">Illuminate\Support\Facades\Log</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> <span style="color:#a6e22e">Illuminate\Support\Facades\Redis</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">UserController</span> <span style="color:#66d9ef">extends</span> <span style="color:#a6e22e">Controller</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">use</span> <span style="color:#a6e22e">JsonResponse</span>, <span style="color:#a6e22e">SendSMS</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> $auth;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//用户访客开门id前缀
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">USER_VISITOR_ID_PREFIX</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;user_visitor_id:&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//用户访客开门密码前缀
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">USER_VISITOR_PWD_PREFIX</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;user_visitor_pwd:&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//短信发送次数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">SMS_TIMES_PREFIX</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;user_sms_times:&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//设置用户ID,密码
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">INIT_PWD</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&lt;&lt;&lt;</span><span style="color:#e6db74">EOF</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">-- 用户ID
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">redis.pcall(&#39;set&#39;, KEYS[1], ARGV[1], &#39;EX&#39;, ARGV[3]);
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">-- 访客密码
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">redis.pcall(&#39;set&#39;, KEYS[2], ARGV[2], &#39;EX&#39;, ARGV[3]);
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#e6db74">EOF</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//延长过期时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">EXTEND_EXPIRE</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&lt;&lt;&lt;</span><span style="color:#e6db74">EOF</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">-- 用户ID
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">redis.pcall(&#39;expire&#39;, KEYS[1], ARGV[1]);
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">-- 访客密码
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">redis.pcall(&#39;expire&#39;, KEYS[2], ARGV[1]);
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#e6db74">EOF</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> __construct()
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">auth</span>()<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">userOrFail</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 访客密码管理
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">visitorPwd</span>()
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//访客[开门,提交访客表单]密码
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">//判断密码是否存在,存在:读取 不存在:生成
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        $pwd <span style="color:#f92672">=</span> <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">get</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_ID_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$pwd) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">//去重生成
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">do</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//生成密码
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                $pwd <span style="color:#f92672">=</span> <span style="color:#a6e22e">mt_rand</span>(<span style="color:#ae81ff">1000</span>, <span style="color:#ae81ff">9999</span>);
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">while</span> (<span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">exists</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_PWD_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">community_uuid</span> <span style="color:#f92672">.</span> <span style="color:#e6db74">&#39;:&#39;</span> <span style="color:#f92672">.</span> $pwd));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">eval</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">INIT_PWD</span>, <span style="color:#ae81ff">2</span>, <span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_ID_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>, <span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_PWD_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">community_uuid</span> <span style="color:#f92672">.</span>  <span style="color:#e6db74">&#39;:&#39;</span> <span style="color:#f92672">.</span>$pwd, $pwd, $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>, <span style="color:#ae81ff">1800</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//取值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                $pwd <span style="color:#f92672">=</span> (<span style="color:#a6e22e">string</span>)$pwd;
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">catch</span> (<span style="color:#a6e22e">\Exception</span> $exception) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;刷新失败:&#39;</span> <span style="color:#f92672">.</span> $exception<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">getMessage</span>());
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;success&#39;</span>, <span style="color:#a6e22e">compact</span>(<span style="color:#e6db74">&#39;pwd&#39;</span>));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 访客密码刷新
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">refreshVisitorPwd</span>()
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//删除当前可能存在的访客密码
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        $old_pwd <span style="color:#f92672">=</span> <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">get</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_ID_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">del</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_ID_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> ($old_pwd) <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">del</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_PWD_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">community_uuid</span> <span style="color:#f92672">.</span>  <span style="color:#e6db74">&#39;:&#39;</span> <span style="color:#f92672">.</span>$old_pwd);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//去重生成
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">do</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">//生成密码
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            $pwd <span style="color:#f92672">=</span> <span style="color:#a6e22e">mt_rand</span>(<span style="color:#ae81ff">1000</span>, <span style="color:#ae81ff">9999</span>);
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">while</span> (<span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">exists</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_PWD_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">community_uuid</span> <span style="color:#f92672">.</span>  <span style="color:#e6db74">&#39;:&#39;</span> <span style="color:#f92672">.</span>$pwd));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">eval</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">INIT_PWD</span>, <span style="color:#ae81ff">2</span>, <span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_ID_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>, <span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_PWD_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">community_uuid</span> <span style="color:#f92672">.</span>  <span style="color:#e6db74">&#39;:&#39;</span> <span style="color:#f92672">.</span>$pwd, $pwd, $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>, <span style="color:#ae81ff">1800</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">//取值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            $pwd <span style="color:#f92672">=</span> (<span style="color:#a6e22e">string</span>)$pwd;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;success&#39;</span>, <span style="color:#a6e22e">compact</span>(<span style="color:#e6db74">&#39;pwd&#39;</span>));
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">catch</span> (<span style="color:#a6e22e">\Exception</span> $exception) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;刷新失败:&#39;</span> <span style="color:#f92672">.</span> $exception<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">getMessage</span>());
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * 向访客发送临时密码短信
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">sendPwdSms</span>()
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//获取用户当天已取消次数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        $send_times <span style="color:#f92672">=</span> <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">get</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">SMS_TIMES_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//每天允许最大次数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        $max <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> ($send_times <span style="color:#f92672">&amp;&amp;</span> $send_times <span style="color:#f92672">&gt;=</span> $max) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;发送失败:每天最多只能发送&#39;</span> <span style="color:#f92672">.</span> $max <span style="color:#f92672">.</span> <span style="color:#e6db74">&#39;次访客密码&#39;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//访客手机号
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        $mobile <span style="color:#f92672">=</span> <span style="color:#a6e22e">request</span>()<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;mobile&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//手机号校验
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">is_numeric</span>($mobile) <span style="color:#f92672">||</span> (<span style="color:#a6e22e">strlen</span>($mobile) <span style="color:#f92672">!=</span> <span style="color:#ae81ff">11</span>)) <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;请填写11位手机号码&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//获取当前临时密码
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        $pwd <span style="color:#f92672">=</span> <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">get</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_ID_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$pwd) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;发送失败:访客密码获取失败&#39;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//短信通知内容
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        $content <span style="color:#f92672">=</span> <span style="color:#a6e22e">sprintf</span>(<span style="color:#e6db74">&#39;您的小区单元临时开锁密码为:%s&#39;</span>, $pwd);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">//短信发送
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#66d9ef">false</span> <span style="color:#f92672">!==</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">sendSMS</span>($mobile, $content)) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">//成功,刷新当前临时密码过期时间,避免过快过期
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">eval</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">EXTEND_EXPIRE</span>, <span style="color:#ae81ff">2</span>, <span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_ID_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>, <span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">USER_VISITOR_PWD_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">community_uuid</span> <span style="color:#f92672">.</span>  <span style="color:#e6db74">&#39;:&#39;</span> <span style="color:#f92672">.</span>$pwd, <span style="color:#ae81ff">1800</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">//更新用户当天已取消次数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> ($send_times) {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//递增
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">incr</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">SMS_TIMES_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>);
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//新增
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#75715e">//获取当前时间-24点时间差
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                $current <span style="color:#f92672">=</span> <span style="color:#a6e22e">time</span>();
+</span></span><span style="display:flex;"><span>                $next <span style="color:#f92672">=</span> <span style="color:#a6e22e">strtotime</span>(<span style="color:#a6e22e">date</span>(<span style="color:#e6db74">&#39;Y-m-d&#39;</span>, $current) <span style="color:#f92672">.</span> <span style="color:#e6db74">&#39; 00:00:00&#39;</span> <span style="color:#f92672">.</span> <span style="color:#e6db74">&#34;+1 days&#34;</span>);
+</span></span><span style="display:flex;"><span>                $expire <span style="color:#f92672">=</span> $next <span style="color:#f92672">-</span> $current;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">//缓存当天取消次数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">set</span>(<span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">SMS_TIMES_PREFIX</span> <span style="color:#f92672">.</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">auth</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uuid</span>, <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;EX&#39;</span>, $expire);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;success&#39;</span>);
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">//失败
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">return</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">beJson</span>(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;短信发送失败,请稍后再试&#39;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>临时密码的实现完全脱离了mysql,减少性能损耗</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/redis/">Redis</a></li>
+      <li><a href="http://localhost:1313/tags/%E8%AE%B0%E5%BD%95/">记录</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/2019-04-09-%E5%A6%82%E4%BD%95%E5%9D%9A%E6%8C%81%E5%86%99%E5%8D%9A%E5%AE%A2/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>如何坚持写博客</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2019-03-08-laravel%E5%9F%BA%E4%BA%8Eredis%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E7%A7%92%E6%9D%80%E5%AE%9E%E7%8E%B0/">
+    <span class="title">Next »</span>
+    <br>
+    <span>laravel基于redis的分布式秒杀系统</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

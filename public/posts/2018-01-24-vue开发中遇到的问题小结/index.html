@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>关于vue中$nextTick的一点使用心得 | Lester&#39;s Blog</title>
+<meta name="keywords" content="vue">
+<meta name="description" content="如题...">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2018-01-24-vue%E5%BC%80%E5%8F%91%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98%E5%B0%8F%E7%BB%93/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2018-01-24-vue%E5%BC%80%E5%8F%91%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98%E5%B0%8F%E7%BB%93/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      关于vue中$nextTick的一点使用心得
+    </h1>
+    <div class="post-description">
+      如题...
+    </div>
+    <div class="post-meta"><span title='2018-01-24 22:39:11.923 +0000 UTC'>January 24, 2018</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;272 words
+
+</div>
+  </header> 
+
+  <div class="post-content"><p>当下公司在做一个媒体门户网站,后台由另一家公司使用java开发并提供接口,本人负责开发后台页面,使用的是<a href="https://github.com/PanJiaChen/vue-element-admin">vue-element-admin</a>开发<br>
+下面说一下问题场景,在开发过程中有一个后台管理员角色页面,其中包含一个表单dialog,在其中使用了el-tree组件,<strong>相关</strong> 代码结构如下:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span>&lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;filter-container&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;<span style="color:#f92672">el-button</span> <span style="color:#a6e22e">class</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;filter-item&#34;</span> <span style="color:#a6e22e">style</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;margin-left: 10px;&#34;</span> <span style="color:#a6e22e">v-waves</span> <span style="color:#960050;background-color:#1e0010">@</span><span style="color:#a6e22e">click</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;handleCreate&#34;</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;primary&#34;</span> <span style="color:#a6e22e">icon</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;el-icon-edit&#34;</span>&gt;新增角色
+</span></span><span style="display:flex;"><span>    &lt;/<span style="color:#f92672">el-button</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">div</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#f92672">el-dialog</span> <span style="color:#a6e22e">:title</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;textMap[dialogStatus]&#34;</span> <span style="color:#a6e22e">:visible</span><span style="color:#960050;background-color:#1e0010">.</span><span style="color:#a6e22e">sync</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;dialogFormVisible&#34;</span> <span style="color:#a6e22e">width</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;50%&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>  &lt;<span style="color:#f92672">el-form</span> <span style="color:#a6e22e">:rules</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rules&#34;</span> <span style="color:#a6e22e">ref</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;dataForm&#34;</span> <span style="color:#a6e22e">:model</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;temp&#34;</span> <span style="color:#a6e22e">label-position</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;top&#34;</span> <span style="color:#a6e22e">label-width</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;90px&#34;</span>
+</span></span><span style="display:flex;"><span>           <span style="color:#a6e22e">style</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#39;width: 400px; margin-left:50px;&#39;</span>&gt;
+</span></span><span style="display:flex;"><span>      &lt;<span style="color:#f92672">el-form-item</span> <span style="color:#a6e22e">label</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;选择权限&#34;</span> <span style="color:#a6e22e">prop</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;sysPermission&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>          &lt;<span style="color:#f92672">el-tree</span> <span style="color:#a6e22e">ref</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;tree&#34;</span> <span style="color:#a6e22e">:data</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;sysPermission&#34;</span> <span style="color:#a6e22e">:props</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;formProps&#34;</span> <span style="color:#a6e22e">show-checkbox</span>
+</span></span><span style="display:flex;"><span>                   <span style="color:#960050;background-color:#1e0010">@</span><span style="color:#a6e22e">check-change</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;handleCheckChange&#34;</span> <span style="color:#a6e22e">node-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;id&#34;</span>&gt;&lt;/<span style="color:#f92672">el-tree</span>&gt;
+</span></span><span style="display:flex;"><span>      &lt;/<span style="color:#f92672">el-form-item</span>&gt;
+</span></span><span style="display:flex;"><span>  &lt;/<span style="color:#f92672">el-form</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">el-dialog</span>&gt;
+</span></span></code></pre></div><p>相关的js如下:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">default</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;sysRoleList&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">data</span>() {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">tableKey</span><span style="color:#f92672">:</span> <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">list</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">total</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">listLoading</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">formLoading</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">listQuery</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">page</span><span style="color:#f92672">:</span> <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">limit</span><span style="color:#f92672">:</span> <span style="color:#ae81ff">20</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">importance</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">undefined</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">title</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">undefined</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">type</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">undefined</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">sort</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;+id&#39;</span>
+</span></span><span style="display:flex;"><span>                },
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">dialogFormVisible</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">false</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">dialogStatus</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;update&#39;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">textMap</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">update</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;编辑角色&#39;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">create</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;新增角色&#39;</span>
+</span></span><span style="display:flex;"><span>                },
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">rules</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">sysRoleName</span><span style="color:#f92672">:</span> [{<span style="color:#a6e22e">required</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">true</span>, <span style="color:#a6e22e">message</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;必须填写角色名称&#39;</span>, <span style="color:#a6e22e">trigger</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;blur&#39;</span>}]
+</span></span><span style="display:flex;"><span>                },
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 表单数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#a6e22e">temp</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">id</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">sysPermissionList</span><span style="color:#f92672">:</span> [],
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">sysRoleName</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>                },
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">currentKeys</span><span style="color:#f92672">:</span> [],
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 表单权限字段映射
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#a6e22e">formProps</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">label</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;sysPermissionName&#39;</span>
+</span></span><span style="display:flex;"><span>                },
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">sysPermission</span><span style="color:#f92672">:</span> {}
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">created</span>() {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 列表数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// this.getList()
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 获取所有权限
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// this.findAllSysPermission()
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">methods</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">            * todo:checkbox状态变更监听
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">            * */</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">handleCheckChange</span>(<span style="color:#a6e22e">data</span>, <span style="color:#a6e22e">checked</span>, <span style="color:#a6e22e">indeterminate</span>) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">idObj</span> <span style="color:#f92672">=</span> {<span style="color:#a6e22e">id</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">id</span>}
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">temp</span>.<span style="color:#a6e22e">sysPermissionList</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">idObj</span>)
+</span></span><span style="display:flex;"><span>            },
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">resetTemp</span>() {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">temp</span> <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">id</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">sysRoleName</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">sysPermissionList</span><span style="color:#f92672">:</span> []
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            },
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">handleCreate</span>() {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">resetTemp</span>()
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">dialogStatus</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;create&#39;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">currentKeys</span> <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">dialogFormVisible</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$nextTick</span>(() =&gt; {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$refs</span>[<span style="color:#e6db74">&#39;dataForm&#39;</span>].<span style="color:#a6e22e">clearValidate</span>()
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$refs</span>.<span style="color:#a6e22e">tree</span>.<span style="color:#a6e22e">setCheckedKeys</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">currentKeys</span>)
+</span></span><span style="display:flex;"><span>                })
+</span></span><span style="display:flex;"><span>            },
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">handleUpdate</span>(<span style="color:#a6e22e">row</span>) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">resetTemp</span>()
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">dialogStatus</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;update&#39;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">dialogFormVisible</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">temp</span> <span style="color:#f92672">=</span> Object.<span style="color:#a6e22e">assign</span>({}, <span style="color:#a6e22e">row</span>) <span style="color:#75715e">// copy obj
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">currentKeys</span> <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">row</span>.<span style="color:#a6e22e">sysPermissionList</span>.<span style="color:#a6e22e">forEach</span>((<span style="color:#a6e22e">value</span>, <span style="color:#a6e22e">index</span>) =&gt; {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">currentKeys</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">value</span>[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>                })
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$nextTick</span>(() =&gt; {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$refs</span>[<span style="color:#e6db74">&#39;dataForm&#39;</span>].<span style="color:#a6e22e">clearValidate</span>()
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">$refs</span>.<span style="color:#a6e22e">tree</span>.<span style="color:#a6e22e">setCheckedKeys</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">currentKeys</span>)
+</span></span><span style="display:flex;"><span>                })
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><p>需求:<br>
+需要在每次编辑数据的时候触发<code>&lt;el-tree&gt;</code>的方法<code>setCheckedKeys</code><br>
+问题:<br>
+之前没有把<code>this.$refs.tree.setCheckedKeys()</code>写在<code>this.$nextTick</code>的callback之中,因此会提示:</p>
+<pre tabindex="0"><code>TypeError: Cannot read property &#39;setCheckedKeys&#39; of undefined
+</code></pre><p>解决方法:<br>
+把dialog组件内的其他需要执行方法的组件方法写到<code>this.$nextTick</code>的callback之中<br>
+原因如下(官方):</p>
+<blockquote>
+<p>可能你还没有注意到，Vue 异步执行 DOM 更新。只要观察到数据变化，Vue 将开启一个队列，并缓冲在同一事件循环中发生的所有数据改变。如果同一个 watcher 被多次触发，只会被推入到队列中一次。这种在缓冲时去除重复数据对于避免不必要的计算和 DOM 操作上非常重要。然后，在下一个的事件循环“tick”中，Vue 刷新队列并执行实际 (已去重的) 工作。Vue 在内部尝试对异步队列使用原生的 Promise.then 和 MessageChannel，如果执行环境不支持，会采用 setTimeout(fn, 0) 代替。
+例如，当你设置 vm.someData = &rsquo;new value&rsquo; ，该组件不会立即重新渲染。当刷新队列时，组件会在事件循环队列清空时的下一个“tick”更新。多数情况我们不需要关心这个过程，但是如果你想在 DOM 状态更新后做点什么，这就可能会有些棘手。虽然 Vue.js 通常鼓励开发人员沿着“数据驱动”的方式思考，避免直接接触 DOM，但是有时我们确实要这么做。为了在数据变化之后等待 Vue 完成更新 DOM ，可以在数据变化之后立即使用 Vue.nextTick(callback) 。这样回调函数在 DOM 更新完成后就会调用。<br>
+<a href="https://cn.vuejs.org/v2/guide/reactivity.html">深入响应式原理</a></p>
+</blockquote>
+<p>个人理解:<br>
+vue这么做是因为频繁的更新dom是特别耗费性能的，所以搞了一个批处理更新，把所有的update操作放到任务队列中，等主线程中执行栈的所有同步任务执行完毕，系统就会读取任务队列<br>
+一个比较典型的场景，created回调里是无法直接通过this.$refs获取到用ref命名的子组件的，只有通过$nextTick才能访问到。还有比如dialog里有一个步骤条组件，在每次打开对话框都想触发步骤1的动作。如果直接写step=0;step=1;是不会有变化的，因为整个函数执行完之前DOM都不会刷新。把step=1放到$nextTick里就可以了</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/vue/">Vue</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/2018-01-26-vue%E5%BC%80%E5%8F%91%E4%B8%AD%E7%9A%84%E4%B8%80%E4%BA%9B%E7%BB%86%E8%8A%82/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>Vue开发中的一些总结</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2018-01-03-certbot-letsencrypt%E9%85%8D%E7%BD%AEssl%E8%AF%81%E4%B9%A6/">
+    <span class="title">Next »</span>
+    <br>
+    <span>certbot&#43;letsencrypt配置免费单证书多域名ssl证书</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

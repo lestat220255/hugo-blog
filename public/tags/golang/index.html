@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Golang | Lester&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/tags/golang/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/tags/golang/index.xml">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/tags/golang/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="list" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main"> 
+<header class="page-header">
+  <h1>
+    Golang
+  </h1>
+</header>
+
+<article class="post-entry tag-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Golang&#43;Redis分布式可重入锁
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>概念 计算机科学中，可重入互斥锁（英語：reentrant mutex）是互斥锁的一种，同一线程对其多次加锁不会产生死锁。可重入互斥锁也称递归互斥锁（英語：recursive mutex）或递归锁（英語：recursive lock）。
+如果对已经上锁的普通互斥锁进行「加锁」操作，其结果要么失败，要么会阻塞至解锁。而如果换作可重入互斥锁，当且仅当尝试加锁的线程就是持有该锁的线程时，类似的加锁操作就会成功。可重入互斥锁一般都会记录被加锁的次数，只有执行相同次数的解锁操作才会真正解锁。
+递归互斥锁解决了普通互斥锁不可重入的问题：如果函数先持有锁，然后执行回调，但回调的内容是调用它自己，就会产生死锁。
+参考维基百科:可重入互斥锁
+个人观点 在Go中应该很少会有这样的场景，互斥锁从字面上理解，应该不能接收重入，需要重入的场景也不应该考虑互斥锁。个人认为更好的解决方法是从设计的层面避免这种场景的出现。因此，与基于redis的互斥锁不同，这篇文章仅仅是尝试在技术上的实现，在实际应用中应尽可能避免这样的场景出现
+参考
+功能 在基于redis的互斥锁(自动续期,自动重试)的基础上允许重入
+实现的关键功能点:
+加锁：同一线程多次加锁时可以通过某个标识识别该线程为当前持有锁的线程，并且加锁次数&#43;1 解锁：解锁时加锁次数-1，直到次数为0，则可以解锁(DEL) hash锁的结构 Thread KEY FIELD VALUE A EXAMPLE_LOCK 304597349587439(线程对应的随机数,标识锁,防止误解锁) 1(当前线程已加锁次数) 基本流程 在不可重入锁的实现里，只需要关心锁的互斥，误解除和自动续期，因此可以直接使用string类型配合SETNX,PEXPIRE,DEL完成加锁，解锁和续期
+但可重入锁需要锁可以记录当前线程的标识和当前线程已加锁次数，就需要用redis的hash代替string。因为结构发生了变化，所以在加锁，解锁流程上也会有相应改变
+Time ThreadA ThreadB T1 尝试加锁 尝试加锁 T2 加锁成功(key:EXAMPLE_LOCK,field:304597349587439,value:1) 加锁失败 T3 执行当前方法业务代码 尝试重试加锁并等待ThreadA解锁(根据配置间隔和最大重试次数) T4 执行另一个方法业务代码，也可能是递归调用，并再次尝试加锁 T5 加锁成功(key:EXAMPLE_LOCK,field:304597349587439,value:2) T6 执行新的调用方法内的业务代码,直到完成所有嵌套调用 T7 从最里层调用开始解锁,(key:EXAMPLE_LOCK,field:304597349587439,value:1) T8 返回到最外层第一次加锁的位置,解锁(key:EXAMPLE_LOCK,field:304597349587439,value:0) T9 如果当前已加锁次数为0，释放锁 T10 加锁成功 FF 加锁:
+-- KEYS[1]:锁对应的key -- ARGV[1]:锁的expire -- ARGV[2]:锁对应的计数器field(随机值,防止误解锁),记录当前线程已加锁的次数 -- 判断锁是否空闲 if (redis.call(&#39;EXISTS&#39;, KEYS[1]) == 0) then -- 线程首次加锁(锁的初始化,值和过期时间) redis....</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-05-03 14:57:51.923 +0000 UTC'>May 3, 2021</span>&nbsp;·&nbsp;4 min&nbsp;·&nbsp;852 words</footer>
+  <a class="entry-link" aria-label="post link to Golang&#43;Redis分布式可重入锁" href="http://localhost:1313/posts/2021-05-03-golang&#43;redis%E5%88%86%E5%B8%83%E5%BC%8F%E5%8F%AF%E9%87%8D%E5%85%A5%E9%94%81/"></a>
+</article>
+
+<article class="post-entry tag-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Golang&#43;Redis分布式互斥锁
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>引言 假设我们的某个业务会涉及数据更新，同时在实际场景中有较大并发量。流程:读取-&gt;修改-&gt;保存，在不考虑基于DB层的并发处理情况下，这种场景可能对部分数据造成不可预期的执行结果，此时可以考虑使用分布式锁来解决该问题
+需要解决的问题 锁的误解除 业务执行超时导致并发 重试机制 GET和DEL非原子性 代码 目录结构:
+│ main.go │ └─demo lock.go lock.go:
+package demo import ( &#34;context&#34; &#34;fmt&#34; &#34;github.com/go-redis/redis/v8&#34; &#34;math/rand&#34; &#34;time&#34; ) // 重试次数 var retryTimes = 5 // 重试频率 var retryInterval = time.Millisecond * 50 var rdb = redis.NewClient(&amp;redis.Options{ Addr: &#34;localhost:6379&#34;, Password: &#34;&#34;, // no password set DB: 0, // use default DB }) // 锁的默认过期时间 var expiration time.Duration // 模拟分布式业务加锁场景 func MockTest(tag string) { var ctx, cancel = context....</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-05-02 22:39:11.923 +0000 UTC'>May 2, 2021</span>&nbsp;·&nbsp;3 min&nbsp;·&nbsp;440 words</footer>
+  <a class="entry-link" aria-label="post link to Golang&#43;Redis分布式互斥锁" href="http://localhost:1313/posts/2021-05-02-golang&#43;redis%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%92%E6%96%A5%E9%94%81/"></a>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

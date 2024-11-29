@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>NAS | Lester&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="树莓派3B的NAS搭建工具介绍">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/raspberrypi3b-post/nas/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/raspberrypi3b-post/nas/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      NAS
+    </h1>
+    <div class="post-description">
+      树莓派3B的NAS搭建工具介绍
+    </div>
+    <div class="post-meta">63 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e8%b5%84%e6%ba%90%e4%b8%8b%e8%bd%bd" aria-label="资源下载">资源下载</a></li>
+                <li>
+                    <a href="#%e8%b5%84%e6%ba%90%e7%ae%a1%e7%90%86" aria-label="资源管理">资源管理</a></li>
+                <li>
+                    <a href="#%e8%84%9a%e6%9c%ac" aria-label="脚本">脚本</a></li>
+                <li>
+                    <a href="#%e8%bf%9b%e7%a8%8b%e7%ae%a1%e7%90%86" aria-label="进程管理">进程管理</a></li>
+                <li>
+                    <a href="#%e8%b5%84%e6%ba%90%e6%9c%ac%e5%9c%b0%e5%88%86%e4%ba%ab" aria-label="资源本地分享">资源本地分享</a></li>
+                <li>
+                    <a href="#%e8%99%9a%e6%8b%9f%e5%86%85%e7%bd%91" aria-label="虚拟内网">虚拟内网</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p><strong>这个NAS基于RaspbianOS</strong></p>
+<h1 id="资源下载">资源下载<a hidden class="anchor" aria-hidden="true" href="#资源下载">#</a></h1>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>工具</th>
+<th>项目地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>视频资源下载</td>
+<td>yt-dlp</td>
+<td><a href="https://github.com/yt-dlp/yt-dlp">https://github.com/yt-dlp/yt-dlp</a></td>
+</tr>
+<tr>
+<td>音乐下载</td>
+<td>spotDL</td>
+<td><a href="https://github.com/spotDL/spotify-downloader">https://github.com/spotDL/spotify-downloader</a></td>
+</tr>
+<tr>
+<td>PT站下载做种</td>
+<td>Transmission</td>
+<td><a href="https://github.com/transmission/transmission">https://github.com/transmission/transmission</a></td>
+</tr>
+</tbody>
+</table>
+<p>yt-dlp: 几乎可以下载全网所有主流视频播放平台的视频。<br>
+spotDL: 下载Spotify的音乐资源（通过Youtube Music）。<br>
+Transmission，通过其web gui界面配合Tailscale的虚拟局域网可以非常方便的进行远程管理。</p>
+<h1 id="资源管理">资源管理<a hidden class="anchor" aria-hidden="true" href="#资源管理">#</a></h1>
+<p>将下载好的资源移动到本地磁盘或上传到网盘</p>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>工具</th>
+<th>项目地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>资源上传</td>
+<td>rclone</td>
+<td><a href="https://github.com/rclone/rclone">https://github.com/rclone/rclone</a></td>
+</tr>
+</tbody>
+</table>
+<p>rclone同时支持远程资源上传和本地拷贝，在本场景下完美替代rsync。</p>
+<h1 id="脚本">脚本<a hidden class="anchor" aria-hidden="true" href="#脚本">#</a></h1>
+<p>需要通过脚本来自定义下载资源和上传对象，配合yt-dlp,spotDL,rclone实现线上资源的下载，整合。
+通过shell脚本来进行管理</p>
+<h1 id="进程管理">进程管理<a hidden class="anchor" aria-hidden="true" href="#进程管理">#</a></h1>
+<p>上述shell脚本需要通过工具来进行监控和管理</p>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>工具</th>
+<th>项目地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>进程管理</td>
+<td>pm2</td>
+<td><a href="https://github.com/Unitech/pm2">https://github.com/Unitech/pm2</a></td>
+</tr>
+</tbody>
+</table>
+<h1 id="资源本地分享">资源本地分享<a hidden class="anchor" aria-hidden="true" href="#资源本地分享">#</a></h1>
+<p>通过Samba,WebDAV协议分享资源</p>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>工具</th>
+<th>项目地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>阿里云资源本地挂载</td>
+<td>aliyundrive-webdav</td>
+<td><a href="https://github.com/messense/aliyundrive-webdav">https://github.com/messense/aliyundrive-webdav</a></td>
+</tr>
+<tr>
+<td>内网共享本地目录</td>
+<td>samba</td>
+<td><a href="https://ubuntu.com/tutorials/install-and-configure-samba#1-overview">https://ubuntu.com/tutorials/install-and-configure-samba#1-overview</a></td>
+</tr>
+</tbody>
+</table>
+<h1 id="虚拟内网">虚拟内网<a hidden class="anchor" aria-hidden="true" href="#虚拟内网">#</a></h1>
+<p>类似frp等内网穿透工具的效果，但使用方式有所差异。</p>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>工具</th>
+<th>项目地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>实现远程访问</td>
+<td>Tailscale</td>
+<td><a href="https://tailscale.com/">https://tailscale.com/</a></td>
+</tr>
+</tbody>
+</table>
+<p>此外，还需要挂载一个大容量硬盘用于资源存储，但由于我的预算有限（总预算在¥300以内）之前18年200多买到的树莓派3B正好用上，因此不考虑硬件升级，延用树莓派3B和一个几年前的老机械硬盘，也没有做RAID的考虑和读写速度的要求，仅做技术上的功能实现。<br>
+在完成上述搭建之后，可以购买Infuse Pro/Plex之类的应用，就能方便的观看本地资源了。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

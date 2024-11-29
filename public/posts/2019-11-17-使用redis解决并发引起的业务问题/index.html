@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>使用redis解决并发引起的业务问题 | Lester&#39;s Blog</title>
+<meta name="keywords" content="redis">
+<meta name="description" content="redis限流">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/2019-11-17-%E4%BD%BF%E7%94%A8redis%E8%A7%A3%E5%86%B3%E5%B9%B6%E5%8F%91%E5%BC%95%E8%B5%B7%E7%9A%84%E4%B8%9A%E5%8A%A1%E9%97%AE%E9%A2%98/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.d6fcd20a4fb86efa4dfac8ec95da60244cc8871042183da1ef28e3a762ad79c8.css" integrity="sha256-1vzSCk&#43;4bvpN&#43;sjsldpgJEzIhxBCGD2h7yjjp2Ktecg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/2019-11-17-%E4%BD%BF%E7%94%A8redis%E8%A7%A3%E5%86%B3%E5%B9%B6%E5%8F%91%E5%BC%95%E8%B5%B7%E7%9A%84%E4%B8%9A%E5%8A%A1%E9%97%AE%E9%A2%98/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lester&#39;s Blog (Alt + H)">Lester&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags" title="Tags/分类">
+                    <span>Tags/分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/raspberrypi3b-post" title="Pi3B/树莓派3B">
+                    <span>Pi3B/树莓派3B</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about" title="About/关于">
+                    <span>About/关于</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      使用redis解决并发引起的业务问题
+    </h1>
+    <div class="post-description">
+      redis限流
+    </div>
+    <div class="post-meta"><span title='2019-11-17 22:39:11.923 +0000 UTC'>November 17, 2019</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;350 words
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e7%9b%b8%e5%85%b3%e5%8a%9f%e8%83%bd" aria-label="相关功能">相关功能</a></li>
+                <li>
+                    <a href="#%e9%81%87%e5%88%b0%e7%9a%84%e9%97%ae%e9%a2%98" aria-label="遇到的问题">遇到的问题</a></li>
+                <li>
+                    <a href="#%e6%95%b0%e6%8d%ae%e8%a1%a8%e7%bb%93%e6%9e%84" aria-label="数据表结构">数据表结构</a></li>
+                <li>
+                    <a href="#%e5%8e%9f%e6%9c%89%e4%bb%a3%e7%a0%81" aria-label="原有代码">原有代码</a></li>
+                <li>
+                    <a href="#%e7%9b%ae%e5%89%8d%e7%9a%84%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88" aria-label="目前的解决方案">目前的解决方案</a></li>
+                <li>
+                    <a href="#%e6%96%b9%e6%a1%883%e6%b5%81%e7%a8%8b" aria-label="方案3流程">方案3流程</a></li>
+                <li>
+                    <a href="#%e9%94%81%e6%93%8d%e4%bd%9c%e7%9b%b8%e5%85%b3%e4%bb%a3%e7%a0%81" aria-label="锁操作相关代码">锁操作相关代码</a></li>
+                <li>
+                    <a href="#%e5%bd%b1%e5%93%8d%e8%8c%83%e5%9b%b4" aria-label="影响范围">影响范围</a></li>
+                <li>
+                    <a href="#%e5%8f%af%e8%83%bd%e7%9a%84%e5%bc%82%e5%b8%b8" aria-label="可能的异常">可能的异常</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><blockquote>
+<p>上周线上项目遇到了一点问题,处理完成后,在这做个小结</p>
+</blockquote>
+<h3 id="相关功能">相关功能<a hidden class="anchor" aria-hidden="true" href="#相关功能">#</a></h3>
+<p>后台可通过配置发起拼团, 每个拼团可指定同一个用户的最大参与次数</p>
+<h3 id="遇到的问题">遇到的问题<a hidden class="anchor" aria-hidden="true" href="#遇到的问题">#</a></h3>
+<p>由于并发, 导致了代码在有前置判断用户拼团是否超限的前提下, 仍然可能出现拼团次数超限的情况</p>
+<h3 id="数据表结构">数据表结构<a hidden class="anchor" aria-hidden="true" href="#数据表结构">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#75715e">-- ----------------------------
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">-- Table structure for logs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">-- ----------------------------
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">DROP</span> <span style="color:#66d9ef">TABLE</span> <span style="color:#66d9ef">IF</span> <span style="color:#66d9ef">EXISTS</span> <span style="color:#f92672">`</span>logs<span style="color:#f92672">`</span> ;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> <span style="color:#f92672">`</span>logs<span style="color:#f92672">`</span> (
+</span></span><span style="display:flex;"><span><span style="color:#f92672">`</span>id<span style="color:#f92672">`</span> int(<span style="color:#ae81ff">10</span>) unsigned <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> AUTO_INCREMENT <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;pk&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f92672">`</span>act_id<span style="color:#f92672">`</span> int(<span style="color:#ae81ff">6</span>) unsigned <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> <span style="color:#e6db74">&#39;0&#39;</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f92672">`</span>user_id<span style="color:#f92672">`</span> int(<span style="color:#ae81ff">10</span>) unsigned <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> <span style="color:#e6db74">&#39;0&#39;</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f92672">`</span>pay_amount<span style="color:#f92672">`</span> int(<span style="color:#ae81ff">6</span>) unsigned <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> <span style="color:#e6db74">&#39;0&#39;</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f92672">`</span>cat<span style="color:#f92672">`</span> tinyint(<span style="color:#ae81ff">1</span>) unsigned <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> <span style="color:#e6db74">&#39;2&#39;</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f92672">`</span>created_at<span style="color:#f92672">`</span> <span style="color:#66d9ef">timestamp</span> <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> <span style="color:#66d9ef">CURRENT_TIMESTAMP</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f92672">`</span>form_id<span style="color:#f92672">`</span> varchar(<span style="color:#ae81ff">32</span>) <span style="color:#66d9ef">COLLATE</span> utf8mb4_unicode_ci <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> <span style="color:#e6db74">&#39;&#39;</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span>utf8mb4_unicode_ci <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> <span style="color:#e6db74">&#39;&#39;</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span> ( <span style="color:#f92672">`</span>id<span style="color:#f92672">`</span> ) <span style="color:#66d9ef">USING</span> BTREE,
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">KEY</span> <span style="color:#f92672">`</span>idx_userId<span style="color:#f92672">`</span> ( <span style="color:#f92672">`</span>user_id<span style="color:#f92672">`</span> ) <span style="color:#66d9ef">USING</span> BTREE
+</span></span><span style="display:flex;"><span>) ENGINE<span style="color:#f92672">=</span>InnoDB AUTO_INCREMENT<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span> <span style="color:#66d9ef">DEFAULT</span> CHARSET<span style="color:#f92672">=</span>utf8mb4 <span style="color:#66d9ef">COLLATE</span><span style="color:#f92672">=</span>utf8mb4_unicode_ci <span style="color:#66d9ef">COMMENT</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#39;用户拼团记录&#39;</span>;
+</span></span></code></pre></div><h3 id="原有代码">原有代码<a hidden class="anchor" aria-hidden="true" href="#原有代码">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#75715e">// 开始处理请求
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 判断用户购买次数是否超限(通过 `act_id` &amp;&amp; `user_id` )(当前N个并发请求同时通过验证,N&gt;限制次数-用户已拼团次数)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 开启事务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 写入用户请求日志
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 提交事务(已写入N条数据,N&gt;限制次数-用户已拼团次数)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 请求处理完成
+</span></span></span></code></pre></div><blockquote>
+<p>以上代码无法避免重复写入超过限制次数的用户拼团记录</p>
+</blockquote>
+<h3 id="目前的解决方案">目前的解决方案<a hidden class="anchor" aria-hidden="true" href="#目前的解决方案">#</a></h3>
+<ol>
+<li>数据表加<code>unique index</code>
+<ul>
+<li>问题:无法兼容已存在的重复数据,如果修改线上数据,影响范围不易控制</li>
+</ul>
+</li>
+<li>通过在 <code>insert</code> 时使用 <code>DUAL</code> 表的方式配合 <code>WHERE NOT EXISTS</code> 的方式
+<ul>
+<li>代码:<code>INSERT INTO logs ( act_id, user_id, pay_amount, cat, form_id, created_at ) SELECT 1, 1, 1, 1, 'form_id', '2019-11-11 11:11:11' FROM DUAL WHERE NOT EXISTS ( SELECT COUNT(*) AS rows FROM logs WHERE user_id = 1 AND act_id = 1 GROUP BY user_id, act_id HAVING rows &gt;= 拼团限制次数 );</code></li>
+<li>问题:在事务中执行会导致表锁</li>
+</ul>
+</li>
+<li><strong>使用redis并发锁,以下内容主要是关于该方式的实现</strong></li>
+</ol>
+<h3 id="方案3流程">方案3流程<a hidden class="anchor" aria-hidden="true" href="#方案3流程">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#75715e">// 开始处理请求
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 尝试获取锁
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>$lockSuccess <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">_getRedisLock</span>($actId, $userId);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span>(<span style="color:#66d9ef">false</span> <span style="color:#f92672">===</span> $lockSuccess){
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 返回系统繁忙一类的提示
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 判断用户购买次数是否超限(通过 `act_id` &amp;&amp; `user_id` )(当前N个并发请求同时通过验证,N&gt;限制次数-用户已拼团次数)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 开启事务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 写入用户请求日志
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 提交事务(已写入N条数据,N&gt;限制次数-用户已拼团次数)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 在后续每一个会结束当前function的位置释放锁(`throw`,`return`,etc.)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">_delLock</span>($activity_id, $member_id);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 请求处理完成
+</span></span></span></code></pre></div><h3 id="锁操作相关代码">锁操作相关代码<a hidden class="anchor" aria-hidden="true" href="#锁操作相关代码">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span>    <span style="color:#75715e">// 锁自动过期时间为60s
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">REDIS_GROUP_BUY_LOCK_EXPIRE</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">60</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     * 获取用户拼团并发锁数据
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     * @param int $actId 活动ID
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     * @param int $userId 用户ID
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     * @return bool
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">_getRedisLock</span>($actId, $userId)
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        $redis <span style="color:#f92672">=</span> <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">connection</span>(<span style="color:#e6db74">&#39;demo&#39;</span>);
+</span></span><span style="display:flex;"><span>        $key <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;logs_lock_&#39;</span> <span style="color:#f92672">.</span> $actId <span style="color:#f92672">.</span> <span style="color:#e6db74">&#39;_&#39;</span> <span style="color:#f92672">.</span> $userId;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 初始化锁
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            $res <span style="color:#f92672">=</span> $redis<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">set</span>($key, <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;EX&#39;</span>, <span style="color:#a6e22e">self</span><span style="color:#f92672">::</span><span style="color:#a6e22e">REDIS_GROUP_BUY_LOCK_EXPIRE</span>, <span style="color:#e6db74">&#39;NX&#39;</span>);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span>(<span style="color:#f92672">!</span>$res){
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>        }<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">\Exception</span> $e){
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 错误日志
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     * 用户拼团并发锁释放
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     *
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     * @param int $actId 活动ID
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     * @param int $userId 用户ID
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">_delLock</span>($actId, $userId)
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        $redis <span style="color:#f92672">=</span> <span style="color:#a6e22e">Redis</span><span style="color:#f92672">::</span><span style="color:#a6e22e">connection</span>(<span style="color:#e6db74">&#39;demo&#39;</span>);
+</span></span><span style="display:flex;"><span>        $key <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;logs_lock_&#39;</span> <span style="color:#f92672">.</span> $actId <span style="color:#f92672">.</span> <span style="color:#e6db74">&#39;_&#39;</span> <span style="color:#f92672">.</span> $userId;
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 共尝试3次写入
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span>($i<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>;$i<span style="color:#f92672">&lt;=</span><span style="color:#ae81ff">3</span>;$i<span style="color:#f92672">++</span>){
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 锁删除
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">try</span>{
+</span></span><span style="display:flex;"><span>                $redis<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">del</span>([$key]);
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            }<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">\Exception</span> $e){
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 错误日志
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><h3 id="影响范围">影响范围<a hidden class="anchor" aria-hidden="true" href="#影响范围">#</a></h3>
+<p>避免同一个用户对同一个拼团活动的多次请求导致的并发处理,相当于对并发处理的一个workaround</p>
+<h3 id="可能的异常">可能的异常<a hidden class="anchor" aria-hidden="true" href="#可能的异常">#</a></h3>
+<p>业务异常/redis连接异常导致没有成功释放锁,导致用户对同一个活动的下次请求的处理需要等到锁过期</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/redis/">Redis</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/2019-12-18-mysql%E4%B8%80%E8%87%B4%E6%80%A7%E9%9D%9E%E9%94%81%E5%AE%9A%E8%AF%BB%E5%92%8C%E9%94%81%E5%AE%9A%E8%AF%BB/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>MYSQL一致性非锁定读和锁定读</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2019-11-07-%E7%AE%80%E5%8D%95%E8%AE%B0%E5%BD%95%E4%B8%8B%E6%9C%80%E8%BF%91%E5%8D%8A%E5%B9%B4%E7%9A%84%E5%8F%98%E5%8C%96/">
+    <span class="title">Next »</span>
+    <br>
+    <span>简单记录下最近半年的变化</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Lester&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>
